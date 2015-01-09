@@ -16,9 +16,9 @@ RSpec.describe StaticPagesController, :type => :controller do
     end
   end
 
-  describe "GET process" do
+  describe "GET our_process" do
     it "returns http success" do
-      get :process
+      get :our_process
       expect(response).to have_http_status(:success)
     end
   end
