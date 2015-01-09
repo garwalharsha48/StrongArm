@@ -13,8 +13,13 @@ module Strongarm
     # -- all .rb files in that directory are automatically loaded.
     config.generators do |g|
       g.test_framework :rspec
+      g.view_specs false
+      g.helper_specs false
     end
 
+    Railties.engines.each do |engine|
+      config.paths['db/migrate'] += engine.paths['db/migrate'].existent
+    end
     # Set Time.zone default to the specified zone and make Active Record auto-convert to this zone.
     # Run "rake -D time" for a list of tasks for finding time zone names. Default is UTC.
     # config.time_zone = 'Central Time (US & Canada)'
@@ -24,6 +29,7 @@ module Strongarm
     # config.i18n.default_locale = :de
 
     # Do not swallow errors in after_commit/after_rollback callbacks.
-    config.active_record.raise_in_transactional_callbacks = true
+    #comment out for now as had to downgrade to 4.1 for fat_free_crm
+    # config.active_record.raise_in_transactional_callbacks = true 
   end
 end
