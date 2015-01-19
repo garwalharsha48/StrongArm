@@ -77,8 +77,7 @@ Rails.application.configure do
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
 
-  # config.middleware.insert_after(::Rack::Runtime, "::Rack::Auth::Basic", "Staging") do |u, p|
-  #   #[u, p] == [ENV['STAGING_USERNAME'], ENV['STAGING_PASSWORD']]
-  #   [u, p] == ['strongarmtech', 'strongarm']
-  # end
+  config.middleware.insert_after(::Rack::Runtime, "::Rack::Auth::Basic", "Staging") do |u, p|
+    [u, p] == [ENV['STAGING_USERNAME'], ENV['STAGING_PASSWORD']]
+  end
 end
