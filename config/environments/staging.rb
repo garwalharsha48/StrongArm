@@ -78,7 +78,7 @@ Rails.application.configure do
   config.active_record.dump_schema_after_migration = false
 
   config.middleware.insert_after(::Rack::Runtime, "::Rack::Auth::Basic", "Staging") do |u, p|
-    #[u, p] == [ENV['STAGING_USERNAME'], ENV['STAGING_PASSWORD']]
-    [u, p] == ['strongarmtech', 'strongarm']
+    [u, p] == [ENV['STAGING_USERNAME'], ENV['STAGING_PASSWORD']]
+    #[u, p] == ['strongarmtech', 'strongarm']
   end
 end
