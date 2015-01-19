@@ -20,6 +20,14 @@ test:
   <<: *default
   database: strongarm_test
 
+staging: 
+  <<: *default
+  database: strongarm_staging
+  username: deploy 
+  password: <%= ENV['STRONGARM_DATABASE_PASSWORD'] %>
+
 production:
   <<: *default
   database: strongarm_production
+  username: deploy 
+  password: <%= ENV['STRONGARM_DATABASE_PASSWORD'] %>
