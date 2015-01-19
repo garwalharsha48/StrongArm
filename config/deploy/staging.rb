@@ -10,6 +10,8 @@ role :db,  %w{deploy@104.236.112.133}, :primary => true
 
 set :branch, "master"
 
+set :deploy_to, '/var/www/strongarm_staging'
+
 
 # Extended Server Syntax
 # ======================
