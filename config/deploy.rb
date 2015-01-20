@@ -13,7 +13,7 @@ set :default_stage, "development"
 # Default deploy_to directory is /var/www/my_app_name
 set :deploy_to, '/var/www/wrong_folder'
 
-set :linked_files, %w{.env}
+
 
 # Default value for :scm is :git
 #set :scm, :git

@@ -92,7 +92,7 @@ p {
 }
 .home-hero {
   height: 680px;
-  background-image: url('/assets/jpeg-7.jpg');
+  background-image: url('jpeg-7.jpg');
   background-image: -webkit-linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('/assets/jpeg-7.jpg');
   background-image: -o-linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('/assets/jpeg-7.jpg');
   background-image: linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('/assets/jpeg-7.jpg');
@@ -101,7 +101,7 @@ p {
   background-attachment: fixed, fixed;
 }
 .home-hero.v22 {
-  background-image: url('/assets/v22_use.jpg');
+  background-image: url('v22_use.jpg');
   background-image: -webkit-linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('/assets/v22_use.jpg');
   background-image: -o-linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('/assets/v22_use.jpg');
   background-image: linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('/assets/v22_use.jpg');

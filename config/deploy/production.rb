@@ -12,6 +12,8 @@ set :branch, "production"
 
 set :deploy_to, '/var/www/strongarm_production'
 
+set :linked_files, %w{.env}
+
 
 # Extended Server Syntax
 # ======================
