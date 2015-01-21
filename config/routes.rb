@@ -2,6 +2,8 @@ Rails.application.routes.draw do
   
 
 
+  resources :newsletter_emails
+
   get 'admin/dashboard'
 
   get 'admin/newsletter'

@@ -3,5 +3,6 @@ class AdminController < ApplicationController
   end
 
   def newsletter
+  	@newsletter_emails = NewsletterEmail.all
   end
 end

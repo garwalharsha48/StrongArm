@@ -1,0 +1,14 @@
+<p id="notice"><%= notice %></p>
+
+<p>
+  <strong>Email:</strong>
+  <%= @newsletter_email.email %>
+</p>
+
+<p>
+  <strong>Product:</strong>
+  <%= @newsletter_email.product %>
+</p>
+
+<%= link_to 'Edit', edit_newsletter_email_path(@newsletter_email) %> |
+<%= link_to 'Back', newsletter_emails_path %>
