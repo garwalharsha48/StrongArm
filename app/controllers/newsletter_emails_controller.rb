@@ -1,4 +1,5 @@
 class NewsletterEmailsController < ApplicationController
+  before_action :authenticate_admin!, only: [:index, :show, :edit, :update, :destroy]
   before_action :set_newsletter_email, only: [:show, :edit, :update, :destroy]
 
   # GET /newsletter_emails

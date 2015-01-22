@@ -24,12 +24,13 @@ RSpec.describe NewsletterEmailsController, :type => :controller do
   # NewsletterEmail. As you add validations to NewsletterEmail, be sure to
   # adjust the attributes here as well.
   let(:valid_attributes) {
-    skip("Add a hash of attributes valid for your model")
+    skip(:email)
   }
+  let(:admin) {FactoryGirl.create(:admin)}
 
-  let(:invalid_attributes) {
-    skip("Add a hash of attributes invalid for your model")
-  }
+  # let(:invalid_attributes) {
+  #   skip("Add a hash of attributes invalid for your model")
+  # }
 
   # This should return the minimal set of values that should be in the session
   # in order to pass any filters (e.g. authentication) defined in
@@ -40,6 +41,7 @@ RSpec.describe NewsletterEmailsController, :type => :controller do
     it "assigns all newsletter_emails as @newsletter_emails" do
       newsletter_email = NewsletterEmail.create! valid_attributes
       get :index, {}, valid_session
+      sign_in :admin
       expect(assigns(:newsletter_emails)).to eq([newsletter_email])
     end
   end
@@ -48,6 +50,7 @@ RSpec.describe NewsletterEmailsController, :type => :controller do
     it "assigns the requested newsletter_email as @newsletter_email" do
       newsletter_email = NewsletterEmail.create! valid_attributes
       get :show, {:id => newsletter_email.to_param}, valid_session
+      sign_in :admin
       expect(assigns(:newsletter_email)).to eq(newsletter_email)
     end
   end
@@ -63,6 +66,7 @@ RSpec.describe NewsletterEmailsController, :type => :controller do
     it "assigns the requested newsletter_email as @newsletter_email" do
       newsletter_email = NewsletterEmail.create! valid_attributes
       get :edit, {:id => newsletter_email.to_param}, valid_session
+      sign_in :admin
       expect(assigns(:newsletter_email)).to eq(newsletter_email)
     end
   end
@@ -103,11 +107,12 @@ RSpec.describe NewsletterEmailsController, :type => :controller do
   describe "PUT update" do
     describe "with valid params" do
       let(:new_attributes) {
-        skip("Add a hash of attributes valid for your model")
+        skip(:email)
       }
 
       it "updates the requested newsletter_email" do
         newsletter_email = NewsletterEmail.create! valid_attributes
+        sign_in :admin
         put :update, {:id => newsletter_email.to_param, :newsletter_email => new_attributes}, valid_session
         newsletter_email.reload
         skip("Add assertions for updated state")
@@ -115,12 +120,14 @@ RSpec.describe NewsletterEmailsController, :type => :controller do
 
       it "assigns the requested newsletter_email as @newsletter_email" do
         newsletter_email = NewsletterEmail.create! valid_attributes
+        sign_in :admin
         put :update, {:id => newsletter_email.to_param, :newsletter_email => valid_attributes}, valid_session
         expect(assigns(:newsletter_email)).to eq(newsletter_email)
       end
 
       it "redirects to the newsletter_email" do
         newsletter_email = NewsletterEmail.create! valid_attributes
+        sign_in :admin
         put :update, {:id => newsletter_email.to_param, :newsletter_email => valid_attributes}, valid_session
         expect(response).to redirect_to(newsletter_email)
       end
@@ -129,12 +136,14 @@ RSpec.describe NewsletterEmailsController, :type => :controller do
     describe "with invalid params" do
       it "assigns the newsletter_email as @newsletter_email" do
         newsletter_email = NewsletterEmail.create! valid_attributes
+        sign_in :admin
         put :update, {:id => newsletter_email.to_param, :newsletter_email => invalid_attributes}, valid_session
         expect(assigns(:newsletter_email)).to eq(newsletter_email)
       end
 
       it "re-renders the 'edit' template" do
         newsletter_email = NewsletterEmail.create! valid_attributes
+        sign_in :admin
         put :update, {:id => newsletter_email.to_param, :newsletter_email => invalid_attributes}, valid_session
         expect(response).to render_template("edit")
       end
@@ -144,6 +153,7 @@ RSpec.describe NewsletterEmailsController, :type => :controller do
   describe "DELETE destroy" do
     it "destroys the requested newsletter_email" do
       newsletter_email = NewsletterEmail.create! valid_attributes
+      sign_in :admin
       expect {
         delete :destroy, {:id => newsletter_email.to_param}, valid_session
       }.to change(NewsletterEmail, :count).by(-1)
@@ -151,6 +161,7 @@ RSpec.describe NewsletterEmailsController, :type => :controller do
 
     it "redirects to the newsletter_emails list" do
       newsletter_email = NewsletterEmail.create! valid_attributes
+      sign_in :admin
       delete :destroy, {:id => newsletter_email.to_param}, valid_session
       expect(response).to redirect_to(newsletter_emails_url)
     end

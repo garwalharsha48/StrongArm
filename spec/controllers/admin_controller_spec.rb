@@ -1,18 +1,22 @@
 require 'rails_helper'
 
 RSpec.describe AdminController, :type => :controller do
+  let(:admin) {FactoryGirl.create(:admin)}
 
   describe "GET dashboard" do
     it "returns http success" do
       get :dashboard
-      expect(response).to have_http_status(:success)
+      sign_in admin
+      expect(response).to have_http_status(302)
     end
   end
 
   describe "GET newsletter" do
     it "returns http success" do
       get :newsletter
-      expect(response).to have_http_status(:success)
+      sign_in admin
+      expect(response).to have_http_status(302)
+
     end
   end
 

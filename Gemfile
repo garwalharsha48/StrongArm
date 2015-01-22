@@ -34,7 +34,7 @@ gem 'dotenv-deployment' #for environmental variables
 # Use Capistrano for deployment
 gem 'capistrano-rails', group: :development
 
-
+gem 'devise'
 
 group :development, :test do
 	gem 'better_errors'

@@ -1,7 +1,7 @@
 require 'rails_helper'
 
-feature "visiting the admin dashboard" do
-	let(:admin) {FactoryGirl.create(:admin)}
+feature "visiting the site to sign in" do
+  let(:admin) {FactoryGirl.create(:admin)}
 
   def fill_in_signin_fields
     fill_in "admin[email]", with: admin.email
@@ -9,10 +9,9 @@ feature "visiting the admin dashboard" do
     click_button "Log in"
   end
 
-  scenario "the visitor can click on link to crm" do
+  scenario "as an admin" do
     visit admin_dashboard_path
     fill_in_signin_fields
-    
     expect(page).to have_link 'Access StrongArm CRM', href: 'http://crm.imaginaryinformation.com'
   end
 end

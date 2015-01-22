@@ -2,6 +2,7 @@ Rails.application.routes.draw do
   
 
 
+  devise_for :admins, :skip => :registrations
   resources :newsletter_emails
 
   get 'admin/dashboard'
