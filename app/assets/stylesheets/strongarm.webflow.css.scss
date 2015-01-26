@@ -830,7 +830,7 @@ p {
   position: absolute;
   width: 100%;
   height: 100%;
-  background-image: url('../images/jpeg-7.jpg');
+  background-image: url('jpeg-7.jpg');
   background-position: 50% 50%;
   background-size: cover;
   background-attachment: scroll;
@@ -888,16 +888,7 @@ p {
   border: 1px solid #333;
   border-radius: 5px;
   background-color: #171717;
-}
-.login-txt-placeholder {
-  margin-top: 14px;
-  margin-bottom: 14px;
   padding-left: 15px;
-  font-family:'Droid Sans', sans-serif;
-  color: #999;
-  font-size: 14px;
-  font-style: normal;
-  letter-spacing: 2px;
 }
 .login-logo {
   display: block;
@@ -931,6 +922,7 @@ p {
   font-size: 12px;
   letter-spacing: 1px;
   text-decoration: none;
+  color: #333;
 }
 .login-forgot-txt:hover {
   color: #666;
@@ -948,6 +940,38 @@ p {
 .dash-body {
   height: 100%;
   background-color: #1c1c1c;
+}
+::-webkit-input-placeholder {
+  margin-top: 14px;
+  margin-bottom: 14px;
+  padding-left: 15px;
+  font-family:'Droid Sans', sans-serif;
+  color: #999;
+  font-size: 14px;
+  font-style: normal;
+  letter-spacing: 2px;
+}
+
+::-moz-placeholder {  /* Firefox 19+ */
+  margin-top: 14px;
+  margin-bottom: 14px;
+  padding-left: 15px;
+  font-family:'Droid Sans', sans-serif;
+  color: #999;
+  font-size: 14px;
+  font-style: normal;
+  letter-spacing: 2px; 
+}
+
+:-ms-input-placeholder {  
+  margin-top: 14px;
+  margin-bottom: 14px;
+  padding-left: 15px;
+  font-family:'Droid Sans', sans-serif;
+  color: #999;
+  font-size: 14px;
+  font-style: normal;
+  letter-spacing: 2px;  
 }
 @media (max-width: 991px) {
   .button.product.about {
