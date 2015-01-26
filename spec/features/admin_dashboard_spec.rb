@@ -13,6 +13,6 @@ feature "visiting the admin dashboard" do
     visit admin_dashboard_path
     fill_in_signin_fields
     
-    expect(page).to have_link 'Access StrongArm CRM', href: 'http://crm.imaginaryinformation.com'
+    expect(page).to have_link 'CRM', href: 'http://crm.strongarmtech.com'
   end
 end
