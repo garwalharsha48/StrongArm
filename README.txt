@@ -22,6 +22,8 @@ Things you may want to cover:
 * Deployment instructions
 
 * ...
+ssh deploy@104.236.112.133
+cd /var/www
 
 
 Please feel free to use a different markup language if you do not plan to run
