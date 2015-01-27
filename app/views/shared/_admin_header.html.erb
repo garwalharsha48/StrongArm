@@ -4,6 +4,6 @@
 		  <%= link_to('LOG OUT', destroy_admin_session_path, :method => :delete, :class => "w-nav-link topnav-link" ) %>        
 		<% else %>
 		  <%= link_to('LOG IN', new_admin_session_path, :class => "w-nav-link topnav-link")  %>  
-		<% end %><a class="w-nav-link topnav-link" href="http://crm.strongarmtech.com">CRM</a><%= link_to (image_tag "logo.png"), root_path, :class => "w-nav-brand", :alt => "logo.png" %>
+		<% end %><a class="w-nav-link topnav-link" href="http://crm.strongarmtech.com">CRM</a><%= link_to (image_tag "logo.png", :class=>"logo"), root_path, :class => "w-nav-brand", :alt => "logo.png" %>
 	</div>
 </div>	

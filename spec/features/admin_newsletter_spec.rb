@@ -8,7 +8,7 @@ feature "visiting the admin dashboard" do
   def fill_in_signin_fields
     fill_in "admin[email]", with: admin.email
     fill_in "admin[password]", with: admin.password
-    click_button "Log in"
+    click_button "LOGIN"
   end
   scenario "the admin can see a list of newsletter emails" do
     visit admin_newsletter_path
