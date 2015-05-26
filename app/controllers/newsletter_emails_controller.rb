@@ -29,7 +29,7 @@ class NewsletterEmailsController < ApplicationController
 
     respond_to do |format|
       if @newsletter_email.save
-        format.html { redirect_to @newsletter_email, notice: 'Newsletter email was successfully created.' }
+        format.html { redirect_to '/thank-you'}
         format.json { render :show, status: :created, location: @newsletter_email }
       else
         format.html { render :new }
@@ -62,6 +62,9 @@ class NewsletterEmailsController < ApplicationController
     end
   end
 
+  def thank_you
+  end
+
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_newsletter_email
@@ -70,6 +73,6 @@ class NewsletterEmailsController < ApplicationController
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def newsletter_email_params
-      params.require(:newsletter_email).permit(:email, :product)
+      params.require(:newsletter_email).permit(:email, :product, :first_name)
     end
 end

@@ -11,15 +11,15 @@
     </div>
   <% end %>
 
-  <div class="field">
-    <%= f.label :email %><br>
-    <%= f.text_field :email %>
-  </div>
-  <div class="field">
-    <%= f.label :product %><br>
-    <%= f.text_field :product %>
-  </div>
-  <div class="actions">
-    <%= f.submit %>
-  </div>
+        <div class="modal-window">
+          <div class="modal-width-div">
+            <div class="login-logo">
+              <%= image_tag "logo_1.png" %>
+            </div>
+            <%= f.text_field :first_name, :class => "login-field name-field", placeholder: "FIRST NAME", required: true, autofocus: true %> 
+            <%= f.text_field :email, :class => "login-field email-field", placeholder: "EMAIL ADDRESS", required: true %>           
+            <%= f.submit 'SIGN UP', :class => "button login-btn" %>
+          </div>
+        </div>
+      
 <% end %>
