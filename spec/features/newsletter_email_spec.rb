@@ -9,7 +9,8 @@ feature "visiting the mailing list page" do
 	end	
 
   scenario "the visitor can sign up to mailing list" do
-    visit "/mailing-list"
+    visit root_path
+    click_link "Sign Up to Our Mailing List"
     expect(page).to have_css("input.login-field.name-field")
     fillin_form
 
