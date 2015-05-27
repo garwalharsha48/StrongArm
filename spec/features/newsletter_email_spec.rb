@@ -14,5 +14,11 @@ feature "visiting the mailing list page" do
     fillin_form
 
     expect(page).to have_content("Thanks for signing up.")
+  	
+  	open_email('justin@strongarmtech.com')
+  	expect(current_email.to).to eq ['justin@strongarmtech.com']
+    expect(current_email.subject).to eq 'Welcome from StrongArm Tech'
+    expect(current_email).to have_content('Thanks for signing up to the StrongArm email') 
+    clear_emails
   end
 end

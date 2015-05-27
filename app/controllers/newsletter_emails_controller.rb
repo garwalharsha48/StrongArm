@@ -29,6 +29,7 @@ class NewsletterEmailsController < ApplicationController
 
     respond_to do |format|
       if @newsletter_email.save
+        MailingList.mailing_list_confirmation(@newsletter_email).deliver_now
         format.html { redirect_to '/thank-you'}
         format.json { render :show, status: :created, location: @newsletter_email }
       else
