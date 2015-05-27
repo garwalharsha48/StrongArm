@@ -11,11 +11,12 @@ feature "visiting the admin dashboard" do
     click_button "LOGIN"
   end
   scenario "the admin can see a list of newsletter emails" do
-    visit admin_newsletter_path
+    visit admin_dashboard_path
     fill_in_signin_fields
 
-    expect(page).to have_content "V22"
+    expect(page).to have_content newsletter_email.first_name
+    expect(page).to have_content newsletter_email.email
     expect(page).to have_link 'Show', count: 1
-    expect(page).to have_link 'New Newsletter email', href: new_newsletter_email_path
+    
   end
 end

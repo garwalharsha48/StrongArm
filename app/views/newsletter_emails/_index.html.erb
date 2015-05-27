@@ -1,12 +1,11 @@
-<p id="notice"><%= notice %></p>
-
-<h1>Listing Newsletter Emails</h1>
+<h1>Listing Mailing List Emails</h1>
 
 <table>
   <thead>
     <tr>
+      <th>First Name</th>
       <th>Email</th>
-      <th>Product</th>
+      <th>Date Added</th>
       <th colspan="3"></th>
     </tr>
   </thead>
@@ -14,15 +13,12 @@
   <tbody>
     <% @newsletter_emails.each do |newsletter_email| %>
       <tr>
+        <td><%= newsletter_email.first_name %></td>
         <td><%= newsletter_email.email %></td>
-        <td><%= newsletter_email.product %></td>
+        <td><%= newsletter_email.created_at.to_date %></td>
         <td><%= link_to 'Show', newsletter_email %></td>
         <td><%= link_to 'Edit', edit_newsletter_email_path(newsletter_email) %></td>
       </tr>
     <% end %>
   </tbody>
 </table>
-
-<br>
-
-<%= link_to 'New Newsletter email', new_newsletter_email_path %>

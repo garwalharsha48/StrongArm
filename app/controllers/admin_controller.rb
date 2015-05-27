@@ -3,6 +3,7 @@ class AdminController < ApplicationController
 	layout 'admin'
 	
   def dashboard
+  	@newsletter_emails = NewsletterEmail.all
   end
 
   def newsletter
