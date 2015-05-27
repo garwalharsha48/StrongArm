@@ -1,11 +1,11 @@
-<h1>Listing Mailing List Emails</h1>
+<h1 class="dash-header dash-txt">Mailing List Emails</h1>
 
 <table>
   <thead>
     <tr>
-      <th>First Name</th>
-      <th>Email</th>
-      <th>Date Added</th>
+      <th class="dash-txt">First Name</th>
+      <th class="dash-txt">Email</th>
+      <th class="dash-txt">Date Added</th>
       <th colspan="3"></th>
     </tr>
   </thead>
@@ -13,12 +13,14 @@
   <tbody>
     <% @newsletter_emails.each do |newsletter_email| %>
       <tr>
-        <td><%= newsletter_email.first_name %></td>
-        <td><%= newsletter_email.email %></td>
-        <td><%= newsletter_email.created_at.to_date %></td>
+        <td class="dash-txt"><%= newsletter_email.first_name %></td>
+        <td class="dash-txt"><%= newsletter_email.email %></td>
+        <td class="dash-txt"><%= newsletter_email.created_at.to_date %></td>
         <td><%= link_to 'Show', newsletter_email %></td>
         <td><%= link_to 'Edit', edit_newsletter_email_path(newsletter_email) %></td>
       </tr>
     <% end %>
   </tbody>
 </table>
+
+<%= link_to 'Download CSV of Mailing List', newsletter_emails_path(format: :csv) %>

@@ -1,0 +1,5 @@
+<% headers = ['First Name', 'Email', 'Date Added'] %>
+<%= CSV.generate_line headers %>
+<% @newsletter_emails.each do |newsletter_email| %>
+  <%= CSV.generate_line([newsletter_email.first_name, newsletter_email.email, newsletter_email.created_at.to_date]) %>
+<% end %>
