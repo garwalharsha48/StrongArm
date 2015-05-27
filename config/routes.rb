@@ -2,6 +2,8 @@ Rails.application.routes.draw do
   
 
 
+  resources :contact_forms
+
   devise_for :admins, :skip => :registrations
   resources :newsletter_emails
 

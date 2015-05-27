@@ -114,6 +114,9 @@ p {
   background-color: #c70000;
   color: white;
 }
+.button.login-btn.contact-btn {
+  float: right;
+}
 .home-hero {
   height: 680px;
   background-image: url('jpeg-7.jpg');
@@ -871,6 +874,15 @@ p {
   border: 1px solid #333;
   background-color: rgba(0, 0, 0, 0.70);
 }
+.modal-window.thanks-window {
+  width: 800px;
+  height: 600px;
+  margin-top: 100px;
+}
+.modal-window.contact-modal {
+  height: 600px;
+  margin-top: 120px;
+}
 .modal-width-div {
   display: block;
   width: 450px;
@@ -888,12 +900,6 @@ p {
   border: 1px solid #333;
   border-radius: 5px;
   background-color: #171717;
-  padding-left: 15px;
-  font-family:'Droid Sans', sans-serif;
-  color: #999;
-  font-size: 14px;
-  font-style: normal;
-  letter-spacing: 2px;
 }
 .login-field.name-field {
   margin-top: 40px;
@@ -1017,6 +1023,28 @@ p {
 .dash-header {
   margin-top: 80px;
 }
+.notice {
+  color: white;
+  font-size: 18px;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: black;
+}
+.contact-txt {
+  font-family:'Droid Sans', sans-serif;
+  color: whitesmoke;
+  text-align: center;
+  letter-spacing: 1px;
+}
+.contact-btn-div {
+  display: block;
+  width: 350px;
+  margin-right: auto;
+  margin-left: auto;
+}
+.login-field.message-field {
+  height: 100px;
+}
 @media (max-width: 991px) {
   .button.product.about {
     margin-top: 20px;
@@ -1101,6 +1129,14 @@ p {
   }
   .dropdown-block {
     width: 728px;
+  }
+  .txt-underline {
+    text-decoration: underline;
+  }
+  .modal-window.thanks-window {
+    width: auto;
+    margin-right: 50px;
+    margin-left: 50px;
   }
 }
 @media (max-width: 767px) {
@@ -1212,11 +1248,18 @@ p {
     margin-top: 140px;
     margin-bottom: 140px;
   }
+  .thanks-txt-div {
+    padding-right: 50px;
+    padding-left: 50px;
+  }
 }
 @media (max-width: 479px) {
   .button.product.about {
     margin-top: 40px;
     margin-bottom: 40px;
+  }
+  .button.login-btn.contact-btn {
+    float: none;
   }
   .home-hero {
     height: 500px;
@@ -1414,13 +1457,27 @@ p {
     width: 304px;
     padding-right: 55px;
   }
-    .login-field.name-field {
+  .login-field {
+    width: 250px;
+  }
+  .login-field.name-field {
+    width: 250px;
+    margin-right: auto;
+    margin-left: auto;
+  }
+  .login-field.email-field {
     width: auto;
     margin-right: 15px;
     margin-left: 15px;
   }
-  .login-field.email-field {
+  .thanks-txt-div {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+  .contact-btn-div {
     width: auto;
+  }
+  .modal-window.thanks-window {
     margin-right: 15px;
     margin-left: 15px;
   }

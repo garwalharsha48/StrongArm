@@ -1,0 +1,25 @@
+<%= form_for(@contact_form) do |f| %>
+  <% if @contact_form.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@contact_form.errors.count, "error") %> prohibited this contact_form from being saved:</h2>
+
+      <ul>
+      <% @contact_form.errors.full_messages.each do |message| %>
+        <li><%= message %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="w-form">           
+    <h1 class="contact-txt">Contact Us</h1>
+    <p class="notice"><%= notice %></p>
+    <%= f.text_field :name, class: "w-input login-field name-field", placeholder: "Enter your name", required:"required", autofocus:"autofocus" %>
+    <%= f.text_field :email, class: "w-input login-field", placeholder:"Enter your email address", required:"required", autofocus:"autofocus" %>    
+    <%= f.select(:subject, ["Choose a subject", "Sales", "Engineering", "Partnerships", "Science"], {}, {class: "w-select login-field"}) %>             
+    <%= f.text_area :message, class: "w-input login-field message-field", placeholder:"Type your message", required:"required", autofocus:"autofocus" %>            
+    <div class="contact-btn-div">
+      <%= f.submit "SEND MESSAGE", class: "w-button button login-btn contact-btn" %>
+    </div>
+  </div>  
+<% end %>
