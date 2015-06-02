@@ -25,7 +25,7 @@ class ContactFormsController < ApplicationController
     @contact_form = ContactForm.new(contact_form_params)
     @contact_form.save
     ContactFormMailer.contact_form_submission(@contact_form).deliver_now
-    redirect_to :back, notice: 'Thank you for your message. We will contact you soon!'
+    redirect_to :back, notice: "Thanks. We'll be in touch soon!"
   end
 
   def update
