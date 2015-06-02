@@ -1,465 +1,686 @@
+(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+'use strict';
+
 /*!
- * ----------------------------------------------------------------------
  * Webflow: Front-end site library
  * @license MIT
- * Other scripts may access this api using an async handler:
+ * Inline scripts may access the api using an async handler:
  *   var Webflow = Webflow || [];
  *   Webflow.push(readyFunction);
- * ----------------------------------------------------------------------
  */
-var Webflow = { w: Webflow };
-Webflow.init = function () {
-  'use strict';
 
-  var $ = window.$;
+var Webflow = require('./webflow-lib');
+window.Webflow = Webflow;
+var define = Webflow.define;
+
+/**
+ * Webflow: Front-end modules
+ */
+define('ix'       , require('./webflow-ix'));
+define('touch'    , require('./webflow-touch'));
+define('forms'    , require('./webflow-forms'));
+define('maps'     , require('./webflow-maps'));
+define('gplus'    , require('./webflow-gplus'));
+define('scroll'   , require('./webflow-scroll'));
+define('links'    , require('./webflow-links'));
+define('slider'   , require('./webflow-slider'));
+define('lightbox' , require('./webflow-lightbox'));
+define('navbar'   , require('./webflow-navbar'));
+define('dropdown' , require('./webflow-dropdown'));
+define('tabs'     , require('./webflow-tabs'));
+define('brand'    , require('./webflow-brand'));
+
+
+
+},{"./webflow-brand":2,"./webflow-dropdown":3,"./webflow-forms":4,"./webflow-gplus":5,"./webflow-ix":6,"./webflow-lib":7,"./webflow-lightbox":8,"./webflow-links":9,"./webflow-maps":10,"./webflow-navbar":11,"./webflow-scroll":12,"./webflow-slider":13,"./webflow-tabs":14,"./webflow-touch":15}],2:[function(require,module,exports){
+'use strict';
+
+/**
+ * Webflow: Brand pages on the subdomain
+ */
+
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
   var api = {};
-  var modules = {};
-  var primary = [];
-  var secondary = this.w || [];
-  var $win = $(window);
-  var _ = api._ = underscore();
-  var domready = false;
-  var tram = window.tram;
-  var Modernizr = window.Modernizr;
-  tram.config.hideBackface = false;
-  tram.config.keepInherited = true;
+  var $html = $('html');
+  var $body = $('body');
+  var location = window.location;
+  var inApp = Webflow.env();
 
-  /**
-   * Webflow.define() - Define a webflow.js module
-   * @param  {string} name
-   * @param  {function} factory
-   */
-  api.define = function (name, factory) {
-    var module = modules[name] = factory($, _);
-    if (!module) return;
-    // If running in Webflow app, subscribe to design/preview events
-    if (api.env()) {
-      $.isFunction(module.design) && window.addEventListener('__wf_design', module.design);
-      $.isFunction(module.preview) && window.addEventListener('__wf_preview', module.preview);
-    }
-    // Look for a ready method on module
-    if (module.ready && $.isFunction(module.ready)) {
-      // If domready has already happened, call ready method
-      if (domready) module.ready();
-      // Otherwise push ready method into primary queue
-      else primary.push(module.ready);
-    }
-  };
+  // -----------------------------------
+  // Module methods
 
-  /**
-   * Webflow.require() - Load a Webflow.js module
-   * @param  {string} name
-   * @return {object}
-   */
-  api.require = function (name) {
-    return modules[name];
-  };
+  api.ready = function() {
+    var doBranding = $html.attr("data-wf-status");
 
-  /**
-   * Webflow.push() - Add a ready handler into secondary queue
-   * @param {function} ready  Callback to invoke on domready
-   */
-  api.push = function (ready) {
-    // If domready has already happened, invoke handler
-    if (domready) {
-      $.isFunction(ready) && ready();
-      return;
-    }
-    // Otherwise push into secondary queue
-    secondary.push(ready);
-  };
+    if (doBranding) {
+      var $branding = $('<div></div>');
+      var $link = $('<a></a>');
+      $link.attr('href', 'http://webflow.com?utm_campaign=brandjs');
 
-  /**
-   * Webflow.env() - Get the state of the Webflow app
-   * @param {string} mode [optional]
-   * @return {boolean}
-   */
-  api.env = function (mode) {
-    var designFlag = window.__wf_design;
-    var inApp = typeof designFlag != 'undefined';
-    if (!mode) return inApp;
-    if (mode == 'design') return inApp && designFlag;
-    if (mode == 'preview') return inApp && !designFlag;
-    if (mode == 'slug') return inApp && window.__wf_slug;
-  };
-
-  // Feature detects + browser sniffs  ಠ_ಠ
-  var userAgent = navigator.userAgent.toLowerCase();
-  var appVersion = navigator.appVersion.toLowerCase();
-  api.env.touch = ('ontouchstart' in window) || window.DocumentTouch && document instanceof window.DocumentTouch;
-  var chrome = api.env.chrome = (window.chrome || /chrome/.test(userAgent)) && parseInt(appVersion.match(/chrome\/(\d+)\./)[1], 10);
-  var ios = api.env.ios = Modernizr && Modernizr.ios;
-  api.env.safari = /safari/.test(userAgent) && !chrome && !ios;
-
-  /**
-   * Webflow.script() - Append script to document head
-   * @param {string} src
-   */
-  api.script = function (src) {
-    var doc = document;
-    var scriptNode = doc.createElement('script');
-    scriptNode.type = 'text/javascript';
-    scriptNode.src = src;
-    doc.getElementsByTagName('head')[0].appendChild(scriptNode);
-  };
-
-  /**
-   * Webflow.resize, Webflow.scroll - throttled event proxies
-   */
-  var resizeEvents = 'resize.webflow orientationchange.webflow load.webflow';
-  var scrollEvents = 'scroll.webflow ' + resizeEvents;
-  api.resize = eventProxy($win, resizeEvents);
-  api.scroll = eventProxy($win, scrollEvents);
-  api.redraw = eventProxy();
-
-  // Create a proxy instance for throttled events
-  function eventProxy(target, types) {
-
-    // Set up throttled method (using custom frame-based _.throttle)
-    var handlers = [];
-    var proxy = {};
-    proxy.up = _.throttle(function (evt) {
-      _.each(handlers, function (h) { h(evt); });
-    });
-
-    // Bind events to target
-    if (target && types) target.on(types, proxy.up);
-
-    /**
-     * Add an event handler
-     * @param  {function} handler
-     */
-    proxy.on = function (handler) {
-      if (typeof handler != 'function') return;
-      if (_.contains(handlers, handler)) return;
-      handlers.push(handler);
-    };
-
-    /**
-     * Remove an event handler
-     * @param  {function} handler
-     */
-    proxy.off = function (handler) {
-      handlers = _.filter(handlers, function (h) {
-        return h !== handler;
+      $branding.css({
+        position: 'fixed',
+        bottom: 0,
+        right: 0,
+        borderTop: '5px solid #2b3239',
+        borderLeft: '5px solid #2b3239',
+        borderTopLeftRadius: '5px',
+        backgroundColor: '#2b3239',
+        padding: '5px 5px 5px 10px',
+        fontFamily: 'Arial',
+        fontSize: '10px',
+        textTransform: 'uppercase',
+        opacity: '0',
+        transition: 'opacity 0.50s ease-in-out'
       });
-    };
-    return proxy;
-  }
 
-  // Webflow.location - Wrap window.location in api
-  api.location = function (url) {
-    window.location = url;
+      $link.css({
+        color: '#AAADB0',
+        textDecoration: 'none'
+      });
+
+      var $webflowLogo = $('<img>');
+      $webflowLogo.attr('src', 'https://daks2k3a4ib2z.cloudfront.net/54153e6a3d25f2755b1f14ed/5445a4b1944ecdaa4df86d3e_subdomain-brand.svg');
+      $webflowLogo.css({
+        opacity: 0.9,
+        width: '55px',
+        verticalAlign: 'middle',
+        paddingLeft: '4px',
+        paddingBottom: '3px'
+      });
+
+      $branding.text('Built with');
+      $branding.append($webflowLogo);
+      $link.append($branding);
+
+      $body.append($link);
+
+      if (/PhantomJS/.test(window.navigator.userAgent)) {
+        return;
+      }
+
+      $branding.css({
+        opacity: '1.0'
+      });
+    }
   };
 
-  // Webflow.app - Designer-specific methods
-  api.app = api.env() ? {} : null;
-  if (api.app) {
+  // Export module
+  return api;
+};
 
-    // Trigger redraw for specific elements
-    var Event = window.Event;
-    var redraw = new Event('__wf_redraw');
-    api.app.redrawElement = function (i, el) { el.dispatchEvent(redraw); };
+},{"./webflow-lib":7}],3:[function(require,module,exports){
+'use strict';
 
-    // Webflow.location - Re-route location change to trigger an event
-    api.location = function (url) {
-      window.dispatchEvent(new CustomEvent('__wf_location', { detail: url }));
+/**
+ * Webflow: Dropdown component
+ */
+
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
+  var api = {};
+  var tram = $.tram;
+  var $doc = $(document);
+  var $dropdowns;
+  var designer;
+  var inApp = Webflow.env();
+  var namespace = '.w-dropdown';
+  var stateOpen = 'w--open';
+  var closeEvent = 'w-close' + namespace;
+  var ix = Webflow.ixEvents();
+
+  // -----------------------------------
+  // Module methods
+
+  api.ready = api.design = api.preview = init;
+
+  // -----------------------------------
+  // Private methods
+
+  function init() {
+    designer = inApp && Webflow.env('design');
+
+    // Find all instances on the page
+    $dropdowns = $doc.find(namespace);
+    $dropdowns.each(build);
+  }
+
+  function build(i, el) {
+    var $el = $(el);
+
+    // Store state in data
+    var data = $.data(el, namespace);
+    if (!data) data = $.data(el, namespace, { open: false, el: $el, config: {} });
+    data.list = $el.children('.w-dropdown-list');
+    data.toggle = $el.children('.w-dropdown-toggle');
+    data.links = data.list.children('.w-dropdown-link');
+    data.outside = outside(data);
+    data.complete = complete(data);
+
+    // Remove old events
+    $el.off(namespace);
+    data.toggle.off(namespace);
+
+    // Set config from data attributes
+    configure(data);
+
+    if (data.nav) data.nav.off(namespace);
+    data.nav = $el.closest('.w-nav');
+    data.nav.on(closeEvent, handler(data));
+
+    // Add events based on mode
+    if (designer) {
+      $el.on('setting' + namespace, handler(data));
+    } else {
+      data.toggle.on('tap' + namespace, toggle(data));
+      $el.on(closeEvent, handler(data));
+      // Close in preview mode
+      inApp && close(data);
+    }
+  }
+
+  function configure(data) {
+    data.config = {
+      hover: +data.el.attr('data-hover'),
+      delay: +data.el.attr('data-delay') || 0
     };
   }
 
-  // DOM ready - Call primary and secondary handlers
-  $(function () {
-    domready = true;
-    $.each(primary.concat(secondary), function (index, value) {
-      $.isFunction(value) && value();
-    });
-    // Trigger resize
-    api.resize.up();
-  });
+  function handler(data) {
+    return function(evt, options) {
+      options = options || {};
 
-  /*!
-   * Webflow._ (aka) Underscore.js 1.5.2 (custom build)
-   * _.each
-   * _.map
-   * _.filter
-   * _.any
-   * _.contains
-   * _.delay
-   * _.defer
-   * _.throttle (webflow)
-   * _.debounce
-   * _.keys
-   * _.has
-   *
-   * http://underscorejs.org
-   * (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
-   * Underscore may be freely distributed under the MIT license.
-   */
-  function underscore() {
-    var _ = {};
+      if (evt.type == 'w-close') {
+        return close(data);
+      }
 
-    // Current version.
-    _.VERSION = '1.5.2-Webflow';
-
-    // Establish the object that gets returned to break out of a loop iteration.
-    var breaker = {};
-
-    // Save bytes in the minified (but not gzipped) version:
-    var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
-
-    // Create quick reference variables for speed access to core prototypes.
-    var
-      push             = ArrayProto.push,
-      slice            = ArrayProto.slice,
-      concat           = ArrayProto.concat,
-      toString         = ObjProto.toString,
-      hasOwnProperty   = ObjProto.hasOwnProperty;
-
-    // All **ECMAScript 5** native function implementations that we hope to use
-    // are declared here.
-    var
-      nativeForEach      = ArrayProto.forEach,
-      nativeMap          = ArrayProto.map,
-      nativeReduce       = ArrayProto.reduce,
-      nativeReduceRight  = ArrayProto.reduceRight,
-      nativeFilter       = ArrayProto.filter,
-      nativeEvery        = ArrayProto.every,
-      nativeSome         = ArrayProto.some,
-      nativeIndexOf      = ArrayProto.indexOf,
-      nativeLastIndexOf  = ArrayProto.lastIndexOf,
-      nativeIsArray      = Array.isArray,
-      nativeKeys         = Object.keys,
-      nativeBind         = FuncProto.bind;
-
-    // Collection Functions
-    // --------------------
-
-    // The cornerstone, an `each` implementation, aka `forEach`.
-    // Handles objects with the built-in `forEach`, arrays, and raw objects.
-    // Delegates to **ECMAScript 5**'s native `forEach` if available.
-    var each = _.each = _.forEach = function(obj, iterator, context) {
-      /* jshint shadow:true */
-      if (obj == null) return;
-      if (nativeForEach && obj.forEach === nativeForEach) {
-        obj.forEach(iterator, context);
-      } else if (obj.length === +obj.length) {
-        for (var i = 0, length = obj.length; i < length; i++) {
-          if (iterator.call(context, obj[i], i, obj) === breaker) return;
-        }
-      } else {
-        var keys = _.keys(obj);
-        for (var i = 0, length = keys.length; i < length; i++) {
-          if (iterator.call(context, obj[keys[i]], keys[i], obj) === breaker) return;
-        }
+      if (evt.type == 'setting') {
+        configure(data);
+        options.open === true && open(data, true);
+        options.open === false && close(data, true);
+        return;
       }
     };
-
-    // Return the results of applying the iterator to each element.
-    // Delegates to **ECMAScript 5**'s native `map` if available.
-    _.map = _.collect = function(obj, iterator, context) {
-      var results = [];
-      if (obj == null) return results;
-      if (nativeMap && obj.map === nativeMap) return obj.map(iterator, context);
-      each(obj, function(value, index, list) {
-        results.push(iterator.call(context, value, index, list));
-      });
-      return results;
-    };
-
-    // Return all the elements that pass a truth test.
-    // Delegates to **ECMAScript 5**'s native `filter` if available.
-    // Aliased as `select`.
-    _.filter = _.select = function(obj, iterator, context) {
-      var results = [];
-      if (obj == null) return results;
-      if (nativeFilter && obj.filter === nativeFilter) return obj.filter(iterator, context);
-      each(obj, function(value, index, list) {
-        if (iterator.call(context, value, index, list)) results.push(value);
-      });
-      return results;
-    };
-
-    // Determine if at least one element in the object matches a truth test.
-    // Delegates to **ECMAScript 5**'s native `some` if available.
-    // Aliased as `any`.
-    var any = _.some = _.any = function(obj, iterator, context) {
-      iterator || (iterator = _.identity);
-      var result = false;
-      if (obj == null) return result;
-      if (nativeSome && obj.some === nativeSome) return obj.some(iterator, context);
-      each(obj, function(value, index, list) {
-        if (result || (result = iterator.call(context, value, index, list))) return breaker;
-      });
-      return !!result;
-    };
-
-    // Determine if the array or object contains a given value (using `===`).
-    // Aliased as `include`.
-    _.contains = _.include = function(obj, target) {
-      if (obj == null) return false;
-      if (nativeIndexOf && obj.indexOf === nativeIndexOf) return obj.indexOf(target) != -1;
-      return any(obj, function(value) {
-        return value === target;
-      });
-    };
-
-    // Function (ahem) Functions
-    // --------------------
-
-    // Delays a function for the given number of milliseconds, and then calls
-    // it with the arguments supplied.
-    _.delay = function(func, wait) {
-      var args = slice.call(arguments, 2);
-      return setTimeout(function(){ return func.apply(null, args); }, wait);
-    };
-
-    // Defers a function, scheduling it to run after the current call stack has
-    // cleared.
-    _.defer = function(func) {
-      return _.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
-    };
-
-    // Returns a function, that, when invoked, will only be triggered once every
-    // browser animation frame - using tram's requestAnimationFrame polyfill.
-    _.throttle = function(func) {
-      var wait, args, context;
-      return function () {
-        if (wait) return;
-        wait = true;
-        args = arguments;
-        context = this;
-        tram.frame(function () {
-          wait = false;
-          func.apply(context, args);
-        });
-      };
-    };
-
-    // Returns a function, that, as long as it continues to be invoked, will not
-    // be triggered. The function will be called after it stops being called for
-    // N milliseconds. If `immediate` is passed, trigger the function on the
-    // leading edge, instead of the trailing.
-    _.debounce = function(func, wait, immediate) {
-      var timeout, args, context, timestamp, result;
-      return function() {
-        context = this;
-        args = arguments;
-        timestamp = new Date();
-        var later = function() {
-          var last = (new Date()) - timestamp;
-          if (last < wait) {
-            timeout = setTimeout(later, wait - last);
-          } else {
-            timeout = null;
-            if (!immediate) result = func.apply(context, args);
-          }
-        };
-        var callNow = immediate && !timeout;
-        if (!timeout) {
-          timeout = setTimeout(later, wait);
-        }
-        if (callNow) result = func.apply(context, args);
-        return result;
-      };
-    };
-
-    // Object Functions
-    // ----------------
-
-    // Retrieve the names of an object's properties.
-    // Delegates to **ECMAScript 5**'s native `Object.keys`
-    _.keys = nativeKeys || function(obj) {
-      if (obj !== Object(obj)) throw new TypeError('Invalid object');
-      var keys = [];
-      for (var key in obj) if (_.has(obj, key)) keys.push(key);
-      return keys;
-    };
-
-    // Shortcut function for checking if an object has a given property directly
-    // on itself (in other words, not on a prototype).
-    _.has = function(obj, key) {
-      return hasOwnProperty.call(obj, key);
-    };
-
-    // Export underscore
-    return _;
   }
 
-  // Export api
-  Webflow = api;
+  function toggle(data) {
+    return _.debounce(function(evt) {
+      data.open ? close(data) : open(data);
+    });
+  }
+
+  function open(data, immediate) {
+    if (data.open) return;
+    closeOthers(data);
+    data.open = true;
+    data.list.addClass(stateOpen);
+    data.toggle.addClass(stateOpen);
+    ix.intro(0, data.el[0]);
+    Webflow.redraw.up();
+
+    // Listen for tap outside events
+    if (!designer) $doc.on('tap' + namespace, data.outside);
+
+    // Clear previous delay
+    window.clearTimeout(data.delayId);
+  }
+
+  function close(data, immediate) {
+    if (!data.open) return;
+    data.open = false;
+    var config = data.config;
+    ix.outro(0, data.el[0]);
+
+    // Stop listening for tap outside events
+    $doc.off('tap' + namespace, data.outside);
+
+    // Clear previous delay
+    window.clearTimeout(data.delayId);
+
+    // Skip delay during immediate
+    if (!config.delay || immediate) return data.complete();
+
+    // Optionally wait for delay before close
+    data.delayId = window.setTimeout(data.complete, config.delay);
+  }
+
+  function closeOthers(data) {
+    var self = data.el[0];
+    $dropdowns.each(function(i, other) {
+      var $other = $(other);
+      if ($other.is(self) || $other.has(self).length) return;
+      $other.triggerHandler(closeEvent);
+    });
+  }
+
+  function outside(data) {
+    // Unbind previous tap handler if it exists
+    if (data.outside) $doc.off('tap' + namespace, data.outside);
+
+    // Close menu when tapped outside
+    return _.debounce(function(evt) {
+      if (!data.open) return;
+      var $target = $(evt.target);
+      if ($target.closest('.w-dropdown-toggle').length) return;
+      if (!data.el.is($target.closest(namespace))) {
+        close(data);
+      }
+    });
+  }
+
+  function complete(data) {
+    return function() {
+      data.list.removeClass(stateOpen);
+      data.toggle.removeClass(stateOpen);
+    };
+  }
+
+  // Export module
+  return api;
 };
-/*!
- * ----------------------------------------------------------------------
- * Webflow: 3rd party plugins
- */
-/* jshint ignore:start */
-/*!
- * tram.js v0.8.0-global
- * Cross-browser CSS3 transitions in JavaScript
- * https://github.com/bkwld/tram
- * MIT License
- */
-window.tram=function(t){function i(t,i){var e=new Z.Bare;return e.init(t,i)}function e(t){return t.replace(/[A-Z]/g,function(t){return"-"+t.toLowerCase()})}function n(t){var i=parseInt(t.slice(1),16),e=255&i>>16,n=255&i>>8,r=255&i;return[e,n,r]}function r(t,i,e){return"#"+(1<<24|t<<16|i<<8|e).toString(16).slice(1)}function s(){}function a(t,i){_("Type warning: Expected: ["+t+"] Got: ["+typeof i+"] "+i)}function o(t,i,e){_("Units do not match ["+t+"]: "+i+", "+e)}function u(t,i,e){if(void 0!==i&&(e=i),void 0===t)return e;var n=e;return K.test(t)||!V.test(t)?n=parseInt(t,10):V.test(t)&&(n=1e3*parseFloat(t)),0>n&&(n=0),n===n?n:e}function c(t){for(var i=-1,e=t?t.length:0,n=[];e>++i;){var r=t[i];r&&n.push(r)}return n}var h=function(t,i,e){function n(t){return"object"==typeof t}function r(t){return"function"==typeof t}function s(){}function a(o,u){function c(){var t=new h;return r(t.init)&&t.init.apply(t,arguments),t}function h(){}u===e&&(u=o,o=Object),c.Bare=h;var l,f=s[t]=o[t],d=h[t]=c[t]=new s;return d.constructor=c,c.mixin=function(i){return h[t]=c[t]=a(c,i)[t],c},c.open=function(t){if(l={},r(t)?l=t.call(c,d,f,c,o):n(t)&&(l=t),n(l))for(var e in l)i.call(l,e)&&(d[e]=l[e]);return r(d.init)||(d.init=o),c},c.open(u)}return a}("prototype",{}.hasOwnProperty),l={ease:["ease",function(t,i,e,n){var r=(t/=n)*t,s=r*t;return i+e*(-2.75*s*r+11*r*r+-15.5*s+8*r+.25*t)}],"ease-in":["ease-in",function(t,i,e,n){var r=(t/=n)*t,s=r*t;return i+e*(-1*s*r+3*r*r+-3*s+2*r)}],"ease-out":["ease-out",function(t,i,e,n){var r=(t/=n)*t,s=r*t;return i+e*(.3*s*r+-1.6*r*r+2.2*s+-1.8*r+1.9*t)}],"ease-in-out":["ease-in-out",function(t,i,e,n){var r=(t/=n)*t,s=r*t;return i+e*(2*s*r+-5*r*r+2*s+2*r)}],linear:["linear",function(t,i,e,n){return e*t/n+i}],"ease-in-quad":["cubic-bezier(0.550, 0.085, 0.680, 0.530)",function(t,i,e,n){return e*(t/=n)*t+i}],"ease-out-quad":["cubic-bezier(0.250, 0.460, 0.450, 0.940)",function(t,i,e,n){return-e*(t/=n)*(t-2)+i}],"ease-in-out-quad":["cubic-bezier(0.455, 0.030, 0.515, 0.955)",function(t,i,e,n){return 1>(t/=n/2)?e/2*t*t+i:-e/2*(--t*(t-2)-1)+i}],"ease-in-cubic":["cubic-bezier(0.550, 0.055, 0.675, 0.190)",function(t,i,e,n){return e*(t/=n)*t*t+i}],"ease-out-cubic":["cubic-bezier(0.215, 0.610, 0.355, 1)",function(t,i,e,n){return e*((t=t/n-1)*t*t+1)+i}],"ease-in-out-cubic":["cubic-bezier(0.645, 0.045, 0.355, 1)",function(t,i,e,n){return 1>(t/=n/2)?e/2*t*t*t+i:e/2*((t-=2)*t*t+2)+i}],"ease-in-quart":["cubic-bezier(0.895, 0.030, 0.685, 0.220)",function(t,i,e,n){return e*(t/=n)*t*t*t+i}],"ease-out-quart":["cubic-bezier(0.165, 0.840, 0.440, 1)",function(t,i,e,n){return-e*((t=t/n-1)*t*t*t-1)+i}],"ease-in-out-quart":["cubic-bezier(0.770, 0, 0.175, 1)",function(t,i,e,n){return 1>(t/=n/2)?e/2*t*t*t*t+i:-e/2*((t-=2)*t*t*t-2)+i}],"ease-in-quint":["cubic-bezier(0.755, 0.050, 0.855, 0.060)",function(t,i,e,n){return e*(t/=n)*t*t*t*t+i}],"ease-out-quint":["cubic-bezier(0.230, 1, 0.320, 1)",function(t,i,e,n){return e*((t=t/n-1)*t*t*t*t+1)+i}],"ease-in-out-quint":["cubic-bezier(0.860, 0, 0.070, 1)",function(t,i,e,n){return 1>(t/=n/2)?e/2*t*t*t*t*t+i:e/2*((t-=2)*t*t*t*t+2)+i}],"ease-in-sine":["cubic-bezier(0.470, 0, 0.745, 0.715)",function(t,i,e,n){return-e*Math.cos(t/n*(Math.PI/2))+e+i}],"ease-out-sine":["cubic-bezier(0.390, 0.575, 0.565, 1)",function(t,i,e,n){return e*Math.sin(t/n*(Math.PI/2))+i}],"ease-in-out-sine":["cubic-bezier(0.445, 0.050, 0.550, 0.950)",function(t,i,e,n){return-e/2*(Math.cos(Math.PI*t/n)-1)+i}],"ease-in-expo":["cubic-bezier(0.950, 0.050, 0.795, 0.035)",function(t,i,e,n){return 0===t?i:e*Math.pow(2,10*(t/n-1))+i}],"ease-out-expo":["cubic-bezier(0.190, 1, 0.220, 1)",function(t,i,e,n){return t===n?i+e:e*(-Math.pow(2,-10*t/n)+1)+i}],"ease-in-out-expo":["cubic-bezier(1, 0, 0, 1)",function(t,i,e,n){return 0===t?i:t===n?i+e:1>(t/=n/2)?e/2*Math.pow(2,10*(t-1))+i:e/2*(-Math.pow(2,-10*--t)+2)+i}],"ease-in-circ":["cubic-bezier(0.600, 0.040, 0.980, 0.335)",function(t,i,e,n){return-e*(Math.sqrt(1-(t/=n)*t)-1)+i}],"ease-out-circ":["cubic-bezier(0.075, 0.820, 0.165, 1)",function(t,i,e,n){return e*Math.sqrt(1-(t=t/n-1)*t)+i}],"ease-in-out-circ":["cubic-bezier(0.785, 0.135, 0.150, 0.860)",function(t,i,e,n){return 1>(t/=n/2)?-e/2*(Math.sqrt(1-t*t)-1)+i:e/2*(Math.sqrt(1-(t-=2)*t)+1)+i}],"ease-in-back":["cubic-bezier(0.600, -0.280, 0.735, 0.045)",function(t,i,e,n,r){return void 0===r&&(r=1.70158),e*(t/=n)*t*((r+1)*t-r)+i}],"ease-out-back":["cubic-bezier(0.175, 0.885, 0.320, 1.275)",function(t,i,e,n,r){return void 0===r&&(r=1.70158),e*((t=t/n-1)*t*((r+1)*t+r)+1)+i}],"ease-in-out-back":["cubic-bezier(0.680, -0.550, 0.265, 1.550)",function(t,i,e,n,r){return void 0===r&&(r=1.70158),1>(t/=n/2)?e/2*t*t*(((r*=1.525)+1)*t-r)+i:e/2*((t-=2)*t*(((r*=1.525)+1)*t+r)+2)+i}]},f={"ease-in-back":"cubic-bezier(0.600, 0, 0.735, 0.045)","ease-out-back":"cubic-bezier(0.175, 0.885, 0.320, 1)","ease-in-out-back":"cubic-bezier(0.680, 0, 0.265, 1)"},d=document,p=window,b="bkwld-tram",m=/[\-\.0-9]/g,v=/[A-Z]/,g="number",y=/^(rgb|#)/,w=/(em|cm|mm|in|pt|pc|px)$/,k=/(em|cm|mm|in|pt|pc|px|%)$/,x=/(deg|rad|turn)$/,z="unitless",q=/(all|none) 0s ease 0s/,$=/^(width|height)$/,M=" ",A=d.createElement("a"),B=["Webkit","Moz","O","ms"],R=["-webkit-","-moz-","-o-","-ms-"],F=function(t){if(t in A.style)return{dom:t,css:t};var i,e,n="",r=t.split("-");for(i=0;r.length>i;i++)n+=r[i].charAt(0).toUpperCase()+r[i].slice(1);for(i=0;B.length>i;i++)if(e=B[i]+n,e in A.style)return{dom:e,css:R[i]+t}},S=i.support={bind:Function.prototype.bind,transform:F("transform"),transition:F("transition"),backface:F("backface-visibility"),timing:F("transition-timing-function")};if(S.transition){var j=S.timing.dom;if(A.style[j]=l["ease-in-back"][0],!A.style[j])for(var I in f)l[I][0]=f[I]}var G=i.frame=function(){var t=p.requestAnimationFrame||p.webkitRequestAnimationFrame||p.mozRequestAnimationFrame||p.oRequestAnimationFrame||p.msRequestAnimationFrame;return t&&S.bind?t.bind(p):function(t){p.setTimeout(t,16)}}(),T=i.now=function(){var t=p.performance,i=t&&(t.now||t.webkitNow||t.msNow||t.mozNow);return i&&S.bind?i.bind(t):Date.now||function(){return+new Date}}(),U=h(function(i){function n(t,i){var e=c((""+t).split(M)),n=e[0];i=i||{};var r=W[n];if(!r)return _("Unsupported property: "+n);if(!i.weak||!this.props[n]){var s=r[0],a=this.props[n];return a||(a=this.props[n]=new s.Bare),a.init(this.$el,e,r,i),a}}function r(t,i,e){if(t){var r=typeof t;if(i||(this.timer&&this.timer.destroy(),this.queue=[],this.active=!1),"number"==r&&i)return this.timer=new Y({duration:t,context:this,complete:o}),this.active=!0,void 0;if("string"==r&&i){switch(t){case"hide":d.call(this);break;case"stop":h.call(this);break;case"redraw":p.call(this);break;default:n.call(this,t,e&&e[1])}return o.call(this)}if("function"==r)return t.call(this,this),void 0;if("object"==r){var s=0;m.call(this,t,function(t,i){t.span>s&&(s=t.span),t.stop(),t.animate(i)},function(t){"wait"in t&&(s=u(t.wait,0))}),b.call(this),s>0&&(this.timer=new Y({duration:s,context:this}),this.active=!0,i&&(this.timer.complete=o));var a=this,c=!1,l={};G(function(){m.call(a,t,function(t){t.active&&(c=!0,l[t.name]=t.nextStyle)}),c&&a.$el.css(l)})}}}function s(t){t=u(t,0),this.active?this.queue.push({options:t}):(this.timer=new Y({duration:t,context:this,complete:o}),this.active=!0)}function a(t){return this.active?(this.queue.push({options:t,args:arguments}),this.timer.complete=o,void 0):_("No active transition timer. Use start() or wait() before then().")}function o(){if(this.timer&&this.timer.destroy(),this.active=!1,this.queue.length){var t=this.queue.shift();r.call(this,t.options,!0,t.args)}}function h(t){this.timer&&this.timer.destroy(),this.queue=[],this.active=!1;var i;"string"==typeof t?(i={},i[t]=1):i="object"==typeof t&&null!=t?t:this.props,m.call(this,i,g),b.call(this)}function l(t){h.call(this,t),m.call(this,t,y,w)}function f(t){"string"!=typeof t&&(t="block"),this.el.style.display=t}function d(){h.call(this),this.el.style.display="none"}function p(){this.el.offsetHeight}function b(){var t,i,e=[];this.upstream&&e.push(this.upstream);for(t in this.props)i=this.props[t],i.active&&e.push(i.string);e=e.join(","),this.style!==e&&(this.style=e,this.el.style[S.transition.dom]=e)}function m(t,i,r){var s,a,o,u,c=i!==g,h={};for(s in t)o=t[s],s in J?(h.transform||(h.transform={}),h.transform[s]=o):(v.test(s)&&(s=e(s)),s in W?h[s]=o:(u||(u={}),u[s]=o));for(s in h){if(o=h[s],a=this.props[s],!a){if(!c)continue;a=n.call(this,s)}i.call(this,a,o)}r&&u&&r.call(this,u)}function g(t){t.stop()}function y(t,i){t.set(i)}function w(t){this.$el.css(t)}function k(t,e){i[t]=function(){return this.children?x.call(this,e,arguments):(this.el&&e.apply(this,arguments),this)}}function x(t,i){var e,n=this.children.length;for(e=0;n>e;e++)t.apply(this.children[e],i);return this}i.init=function(i){if(this.$el=t(i),this.el=this.$el[0],this.props={},this.queue=[],this.style="",this.active=!1,C.keepInherited&&!C.fallback){var e=L(this.el,"transition");e&&!q.test(e)&&(this.upstream=e)}S.backface&&C.hideBackface&&D(this.el,S.backface.css,"hidden")},k("add",n),k("start",r),k("wait",s),k("then",a),k("next",o),k("stop",h),k("set",l),k("show",f),k("hide",d),k("redraw",p)}),Z=h(U,function(i){function e(i,e){var n=t.data(i,b)||t.data(i,b,new U.Bare);return n.el||n.init(i),e?n.start(e):n}i.init=function(i,n){var r=t(i);if(!r.length)return this;if(1===r.length)return e(r[0],n);var s=[];return r.each(function(t,i){s.push(e(i,n))}),this.children=s,this}}),H=h(function(t){function i(){var t=this.get();this.update("auto");var i=this.get();return this.update(t),i}function e(t,i,e){return void 0!==i&&(e=i),t in l?t:e}function n(t){var i=/rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(t);return(i?r(i[1],i[2],i[3]):t).replace(/#(\w)(\w)(\w)$/,"#$1$1$2$2$3$3")}var s={duration:500,ease:"ease",delay:0};t.init=function(t,i,n,r){this.$el=t,this.el=t[0];var a=i[0];n[2]&&(a=n[2]),Q[a]&&(a=Q[a]),this.name=a,this.type=n[1],this.duration=u(i[1],this.duration,s.duration),this.ease=e(i[2],this.ease,s.ease),this.delay=u(i[3],this.delay,s.delay),this.span=this.duration+this.delay,this.active=!1,this.nextStyle=null,this.auto=$.test(this.name),this.unit=r.unit||this.unit||C.defaultUnit,this.angle=r.angle||this.angle||C.defaultAngle,C.fallback||r.fallback?this.animate=this.fallback:(this.animate=this.transition,this.string=this.name+M+this.duration+"ms"+("ease"!=this.ease?M+l[this.ease][0]:"")+(this.delay?M+this.delay+"ms":""))},t.set=function(t){t=this.convert(t,this.type),this.update(t),this.redraw()},t.transition=function(t){this.active=!0,t=this.convert(t,this.type),this.auto&&("auto"==this.el.style[this.name]&&(this.update(this.get()),this.redraw()),"auto"==t&&(t=i.call(this))),this.nextStyle=t},t.fallback=function(t){var e=this.el.style[this.name]||this.convert(this.get(),this.type);t=this.convert(t,this.type),this.auto&&("auto"==e&&(e=this.convert(this.get(),this.type)),"auto"==t&&(t=i.call(this))),this.tween=new X({from:e,to:t,duration:this.duration,delay:this.delay,ease:this.ease,update:this.update,context:this})},t.get=function(){return L(this.el,this.name)},t.update=function(t){D(this.el,this.name,t)},t.stop=function(){(this.active||this.nextStyle)&&(this.active=!1,this.nextStyle=null,D(this.el,this.name,this.get()));var t=this.tween;t&&t.context&&t.destroy()},t.convert=function(t,i){if("auto"==t&&this.auto)return t;var e,r="number"==typeof t,s="string"==typeof t;switch(i){case g:if(r)return t;if(s&&""===t.replace(m,""))return+t;e="number(unitless)";break;case y:if(s){if(""===t&&this.original)return this.original;if(i.test(t))return"#"==t.charAt(0)&&7==t.length?t:n(t)}e="hex or rgb string";break;case w:if(r)return t+this.unit;if(s&&i.test(t))return t;e="number(px) or string(unit)";break;case k:if(r)return t+this.unit;if(s&&i.test(t))return t;e="number(px) or string(unit or %)";break;case x:if(r)return t+this.angle;if(s&&i.test(t))return t;e="number(deg) or string(angle)";break;case z:if(r)return t;if(s&&k.test(t))return t;e="number(unitless) or string(unit or %)"}return a(e,t),t},t.redraw=function(){this.el.offsetHeight}}),N=h(H,function(t,i){t.init=function(){i.init.apply(this,arguments),this.original||(this.original=this.convert(this.get(),y))}}),O=h(H,function(t,i){t.init=function(){i.init.apply(this,arguments),this.animate=this.fallback},t.get=function(){return this.$el[this.name]()},t.update=function(t){this.$el[this.name](t)}}),P=h(H,function(t,i){function e(t,i){var e,n,r,s,a;for(e in t)s=J[e],r=s[0],n=s[1]||e,a=this.convert(t[e],r),i.call(this,n,a,r)}t.init=function(){i.init.apply(this,arguments),this.current||(this.current={},J.perspective&&C.perspective&&(this.current.perspective=C.perspective,D(this.el,this.name,this.style(this.current)),this.redraw()))},t.set=function(t){e.call(this,t,function(t,i){this.current[t]=i}),D(this.el,this.name,this.style(this.current)),this.redraw()},t.transition=function(t){var i=this.values(t);this.tween=new E({current:this.current,values:i,duration:this.duration,delay:this.delay,ease:this.ease});var e,n={};for(e in this.current)n[e]=e in i?i[e]:this.current[e];this.active=!0,this.nextStyle=this.style(n)},t.fallback=function(t){var i=this.values(t);this.tween=new E({current:this.current,values:i,duration:this.duration,delay:this.delay,ease:this.ease,update:this.update,context:this})},t.update=function(){D(this.el,this.name,this.style(this.current))},t.style=function(t){var i,e="";for(i in t)e+=i+"("+t[i]+") ";return e},t.values=function(t){var i,n={};return e.call(this,t,function(t,e,r){n[t]=e,void 0===this.current[t]&&(i=0,~t.indexOf("scale")&&(i=1),this.current[t]=this.convert(i,r))}),n}}),X=h(function(i){function e(t){1===d.push(t)&&G(a)}function a(){var t,i,e,n=d.length;if(n)for(G(a),i=T(),t=n;t--;)e=d[t],e&&e.render(i)}function u(i){var e,n=t.inArray(i,d);n>=0&&(e=d.slice(n+1),d.length=n,e.length&&(d=d.concat(e)))}function c(t){return Math.round(t*p)/p}function h(t,i,e){return r(t[0]+e*(i[0]-t[0]),t[1]+e*(i[1]-t[1]),t[2]+e*(i[2]-t[2]))}var f={ease:l.ease[1],from:0,to:1};i.init=function(t){this.duration=t.duration||0,this.delay=t.delay||0;var i=t.ease||f.ease;l[i]&&(i=l[i][1]),"function"!=typeof i&&(i=f.ease),this.ease=i,this.update=t.update||s,this.complete=t.complete||s,this.context=t.context||this,this.name=t.name;var e=t.from,n=t.to;void 0===e&&(e=f.from),void 0===n&&(n=f.to),this.unit=t.unit||"","number"==typeof e&&"number"==typeof n?(this.begin=e,this.change=n-e):this.format(n,e),this.value=this.begin+this.unit,this.start=T(),t.autoplay!==!1&&this.play()},i.play=function(){this.active||(this.start||(this.start=T()),this.active=!0,e(this))},i.stop=function(){this.active&&(this.active=!1,u(this))},i.render=function(t){var i,e=t-this.start;if(this.delay){if(this.delay>=e)return;e-=this.delay}if(this.duration>e){var n=this.ease(e,0,1,this.duration);return i=this.startRGB?h(this.startRGB,this.endRGB,n):c(this.begin+n*this.change),this.value=i+this.unit,this.update.call(this.context,this.value),void 0}i=this.endHex||this.begin+this.change,this.value=i+this.unit,this.update.call(this.context,this.value),this.complete.call(this.context),this.destroy()},i.format=function(t,i){if(i+="",t+="","#"==t.charAt(0))return this.startRGB=n(i),this.endRGB=n(t),this.endHex=t,this.begin=0,this.change=1,void 0;if(!this.unit){var e=i.replace(m,""),r=t.replace(m,"");e!==r&&o("tween",i,t),this.unit=e}i=parseFloat(i),t=parseFloat(t),this.begin=this.value=i,this.change=t-i},i.destroy=function(){this.stop(),this.context=null,this.ease=this.update=this.complete=s};var d=[],p=1e3}),Y=h(X,function(t){t.init=function(t){this.duration=t.duration||0,this.complete=t.complete||s,this.context=t.context,this.play()},t.render=function(t){var i=t-this.start;this.duration>i||(this.complete.call(this.context),this.destroy())}}),E=h(X,function(t,i){t.init=function(t){this.context=t.context,this.update=t.update,this.tweens=[],this.current=t.current;var i,e;for(i in t.values)e=t.values[i],this.current[i]!==e&&this.tweens.push(new X({name:i,from:this.current[i],to:e,duration:t.duration,delay:t.delay,ease:t.ease,autoplay:!1}));this.play()},t.render=function(t){var i,e,n=this.tweens.length,r=!1;for(i=n;i--;)e=this.tweens[i],e.context&&(e.render(t),this.current[e.name]=e.value,r=!0);return r?(this.update&&this.update.call(this.context),void 0):this.destroy()},t.destroy=function(){if(i.destroy.call(this),this.tweens){var t,e=this.tweens.length;for(t=e;t--;)this.tweens[t].destroy();this.tweens=null,this.current=null}}}),C=i.config={defaultUnit:"px",defaultAngle:"deg",keepInherited:!1,hideBackface:!1,perspective:"",fallback:!S.transition,agentTests:[]};i.fallback=function(t){if(!S.transition)return C.fallback=!0;C.agentTests.push("("+t+")");var i=RegExp(C.agentTests.join("|"),"i");C.fallback=i.test(navigator.userAgent)},i.fallback("6.0.[2-5] Safari"),i.tween=function(t){return new X(t)},i.delay=function(t,i,e){return new Y({complete:i,duration:t,context:e})},t.fn.tram=function(t){return i.call(null,this,t)};var D=t.style,L=t.css,Q={transform:S.transform&&S.transform.css},W={color:[N,y],background:[N,y,"background-color"],"outline-color":[N,y],"border-color":[N,y],"border-top-color":[N,y],"border-right-color":[N,y],"border-bottom-color":[N,y],"border-left-color":[N,y],"border-width":[H,w],"border-top-width":[H,w],"border-right-width":[H,w],"border-bottom-width":[H,w],"border-left-width":[H,w],"border-spacing":[H,w],"letter-spacing":[H,w],margin:[H,w],"margin-top":[H,w],"margin-right":[H,w],"margin-bottom":[H,w],"margin-left":[H,w],padding:[H,w],"padding-top":[H,w],"padding-right":[H,w],"padding-bottom":[H,w],"padding-left":[H,w],"outline-width":[H,w],opacity:[H,g],top:[H,k],right:[H,k],bottom:[H,k],left:[H,k],"font-size":[H,k],"text-indent":[H,k],"word-spacing":[H,k],width:[H,k],"min-width":[H,k],"max-width":[H,k],height:[H,k],"min-height":[H,k],"max-height":[H,k],"line-height":[H,z],"scroll-top":[O,g,"scrollTop"],"scroll-left":[O,g,"scrollLeft"]},J={};S.transform&&(W.transform=[P],J={x:[k,"translateX"],y:[k,"translateY"],rotate:[x],rotateX:[x],rotateY:[x],scale:[g],scaleX:[g],scaleY:[g],skew:[x],skewX:[x],skewY:[x]}),S.transform&&S.backface&&(J.z=[k,"translateZ"],J.rotateZ=[x],J.scaleZ=[g],J.perspective=[w]);var K=/ms/,V=/s|\./,_=function(){var t="warn",i=window.console;return i&&i[t]?function(e){i[t](e)}:s}();return t.tram=i}(window.jQuery);/*!
- * jQuery-ajaxTransport-XDomainRequest - v1.0.1 - 2013-10-17
- * https://github.com/MoonScript/jQuery-ajaxTransport-XDomainRequest
- * Copyright (c) 2013 Jason Moon (@JSONMOON)
- * Licensed MIT (/blob/master/LICENSE.txt)
- */
-(function($){if(!$.support.cors&&$.ajaxTransport&&window.XDomainRequest){var n=/^https?:\/\//i;var o=/^get|post$/i;var p=new RegExp('^'+location.protocol,'i');var q=/text\/html/i;var r=/\/json/i;var s=/\/xml/i;$.ajaxTransport('* text html xml json',function(i,j,k){if(i.crossDomain&&i.async&&o.test(i.type)&&n.test(i.url)&&p.test(i.url)){var l=null;var m=(j.dataType||'').toLowerCase();return{send:function(f,g){l=new XDomainRequest();if(/^\d+$/.test(j.timeout)){l.timeout=j.timeout}l.ontimeout=function(){g(500,'timeout')};l.onload=function(){var a='Content-Length: '+l.responseText.length+'\r\nContent-Type: '+l.contentType;var b={code:200,message:'success'};var c={text:l.responseText};try{if(m==='html'||q.test(l.contentType)){c.html=l.responseText}else if(m==='json'||(m!=='text'&&r.test(l.contentType))){try{c.json=$.parseJSON(l.responseText)}catch(e){b.code=500;b.message='parseerror'}}else if(m==='xml'||(m!=='text'&&s.test(l.contentType))){var d=new ActiveXObject('Microsoft.XMLDOM');d.async=false;try{d.loadXML(l.responseText)}catch(e){d=undefined}if(!d||!d.documentElement||d.getElementsByTagName('parsererror').length){b.code=500;b.message='parseerror';throw'Invalid XML: '+l.responseText;}c.xml=d}}catch(parseMessage){throw parseMessage;}finally{g(b.code,b.message,c,a)}};l.onprogress=function(){};l.onerror=function(){g(500,'error',{text:l.responseText})};var h='';if(j.data){h=($.type(j.data)==='string')?j.data:$.param(j.data)}l.open(i.type,i.url);l.send(h)},abort:function(){if(l){l.abort()}}}}})}})(jQuery);
-/* jshint ignore:end */
+
+},{"./webflow-lib":7}],4:[function(require,module,exports){
+'use strict';
+
 /**
- * ----------------------------------------------------------------------
- * Init lib after plugins
+ * Webflow: Forms
  */
-Webflow.init();
+
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
+  var api = {};
+
+  // Cross-Domain AJAX for IE8
+  require('../plugins/xdomain-min');
+
+  var FORM_API_HOST = 'https://webflow.com';
+  var FORM_SUBMIT_HOST = 'https://webflow.com';
+  var FORM_OLDIE_HOST = 'http://formdata.webflow.com';
+
+  var $doc = $(document);
+  var $forms;
+  var loc = window.location;
+  var retro = window.XDomainRequest && !window.atob;
+  var namespace = '.w-form';
+  var siteId;
+  var emailField = /e(\-)?mail/i;
+  var emailValue = /^\S+@\S+$/;
+  var alert = window.alert;
+  var listening;
+
+  // MailChimp domains: list-manage.com + mirrors
+  var chimpRegex = /list-manage[1-9]?.com/i;
+
+  api.ready = function() {
+    // Init forms
+    init();
+
+    // Wire document events once
+    if (!listening) addListeners();
+  };
+
+  api.preview = api.design = function() {
+    init();
+  };
+
+  function init() {
+    siteId = $('html').attr('data-wf-site');
+
+    $forms = $(namespace + ' form');
+    if (!$forms.length) return;
+    $forms.each(build);
+  }
+
+  function build(i, el) {
+    // Store form state using namespace
+    var $el = $(el);
+    var data = $.data(el, namespace);
+    if (!data) data = $.data(el, namespace, { form: $el }); // data.form
+
+    reset(data);
+    var wrap = $el.closest('div.w-form');
+    data.done = wrap.find('> .w-form-done');
+    data.fail = wrap.find('> .w-form-fail');
+
+    var action = data.action = $el.attr('action');
+    data.handler = null;
+    data.redirect = $el.attr('data-redirect');
+
+    // MailChimp form
+    if (chimpRegex.test(action)) { data.handler = submitMailChimp; return; }
+
+    // Custom form action
+    if (action) return;
+
+    // Webflow form
+    if (siteId) { data.handler = submitWebflow; return; }
+
+    // Alert for disconnected Webflow forms
+    disconnected();
+  }
+
+  function addListeners() {
+    listening = true;
+
+    // Handle form submission for Webflow forms
+    $doc.on('submit', namespace + ' form', function(evt) {
+      var data = $.data(this, namespace);
+      if (data.handler) {
+        data.evt = evt;
+        data.handler(data);
+      }
+    });
+  }
+
+  // Reset data common to all submit handlers
+  function reset(data) {
+    var btn = data.btn = data.form.find(':input[type="submit"]');
+    data.wait = data.btn.attr('data-wait') || null;
+    data.success = false;
+    btn.prop('disabled', false);
+    data.label && btn.val(data.label);
+  }
+
+  // Disable submit button
+  function disableBtn(data) {
+    var btn = data.btn;
+    var wait = data.wait;
+    btn.prop('disabled', true);
+    // Show wait text and store previous label
+    if (wait) {
+      data.label = btn.val();
+      btn.val(wait);
+    }
+  }
+
+  // Find form fields, validate, and set value pairs
+  function findFields(form, result) {
+    var status = null;
+    result = result || {};
+
+    // The ":input" selector is a jQuery shortcut to select all inputs, selects, textareas
+    form.find(':input:not([type="submit"])').each(function(i, el) {
+      var field = $(el);
+      var type = field.attr('type');
+      var name = field.attr('data-name') || field.attr('name') || ('Field ' + (i + 1));
+      var value = field.val();
+
+      if (type == 'checkbox') {
+        value = field.is(':checked');
+      } if (type == 'radio') {
+        // Radio group value already processed
+        if (result[name] === null || typeof result[name] == 'string') {
+          return;
+        }
+
+        value = form.find('input[name="' + field.attr('name') + '"]:checked').val() || null;
+      }
+
+      if (typeof value == 'string') value = $.trim(value);
+      result[name] = value;
+      status = status || getStatus(field, name, value);
+    });
+
+    return status;
+  }
+
+  function getStatus(field, name, value) {
+    var status = null;
+    if (!field.attr('required')) return null;
+    if (!value) status = 'Please fill out the required field: ' + name;
+    else if (emailField.test(name) || emailField.test(field.attr('type'))) {
+      if (!emailValue.test(value)) status = 'Please enter a valid email address for: ' + name;
+    }
+    return status;
+  }
+
+  // Submit form to Webflow
+  function submitWebflow(data) {
+    reset(data);
+
+    var form = data.form;
+    var payload = {
+      name: form.attr('data-name') || form.attr('name') || 'Untitled Form',
+      source: loc.href,
+      test: Webflow.env(),
+      fields: {}
+    };
+
+    preventDefault(data);
+
+    // Find & populate all fields
+    var status = findFields(form, payload.fields);
+    if (status) return alert(status);
+
+    // Disable submit button
+    disableBtn(data);
+
+    // Read site ID
+    // NOTE: If this site is exported, the HTML tag must retain the data-wf-site attribute for forms to work
+    if (!siteId) { afterSubmit(data); return; }
+    var url = FORM_API_HOST + '/api/v1/form/' + siteId;
+
+    // Work around same-protocol IE XDR limitation - without this IE9 and below forms won't submit
+    if (retro && url.indexOf(FORM_SUBMIT_HOST) >= 0) {
+      url = url.replace(FORM_SUBMIT_HOST, FORM_OLDIE_HOST);
+    }
+
+    $.ajax({
+      url: url,
+      type: 'POST',
+      data: payload,
+      dataType: 'json',
+      crossDomain: true
+    }).done(function() {
+      data.success = true;
+      afterSubmit(data);
+    }).fail(function() {
+      afterSubmit(data);
+    });
+  }
+
+  // Submit form to MailChimp
+  function submitMailChimp(data) {
+    reset(data);
+
+    var form = data.form;
+    var payload = {};
+
+    // Skip Ajax submission if http/s mismatch, fallback to POST instead
+    if (/^https/.test(loc.href) && !/^https/.test(data.action)) {
+      form.attr('method', 'post');
+      return;
+    }
+
+    preventDefault(data);
+
+    // Find & populate all fields
+    var status = findFields(form, payload);
+    if (status) return alert(status);
+
+    // Disable submit button
+    disableBtn(data);
+
+    // Use special format for MailChimp params
+    var fullName;
+    _.each(payload, function(value, key) {
+      if (emailField.test(key)) payload.EMAIL = value;
+      if (/^((full[ _-]?)?name)$/i.test(key)) fullName = value;
+      if (/^(first[ _-]?name)$/i.test(key)) payload.FNAME = value;
+      if (/^(last[ _-]?name)$/i.test(key)) payload.LNAME = value;
+    });
+
+    if (fullName && !payload.FNAME) {
+      fullName = fullName.split(' ');
+      payload.FNAME = fullName[0];
+      payload.LNAME = payload.LNAME || fullName[1];
+    }
+
+    // Use the (undocumented) MailChimp jsonp api
+    var url = data.action.replace('/post?', '/post-json?') + '&c=?';
+    // Add special param to prevent bot signups
+    var userId = url.indexOf('u=')+2;
+    userId = url.substring(userId, url.indexOf('&', userId));
+    var listId = url.indexOf('id=')+3;
+    listId = url.substring(listId, url.indexOf('&', listId));
+    payload['b_' + userId + '_' + listId] = '';
+
+    $.ajax({
+      url: url,
+      data: payload,
+      dataType: 'jsonp'
+    }).done(function(resp) {
+      data.success = (resp.result == 'success' || /already/.test(resp.msg));
+      if (!data.success) console.info('MailChimp error: ' + resp.msg);
+      afterSubmit(data);
+    }).fail(function() {
+      afterSubmit(data);
+    });
+  }
+
+  // Common callback which runs after all Ajax submissions
+  function afterSubmit(data) {
+    var form = data.form;
+    var wrap = form.closest('div.w-form');
+    var redirect = data.redirect;
+    var success = data.success;
+
+    // Redirect to a success url if defined
+    if (success && redirect) {
+      Webflow.location(redirect);
+      return;
+    }
+
+    // Show or hide status divs
+    data.done.toggle(success);
+    data.fail.toggle(!success);
+
+    // Hide form on success
+    form.toggle(!success);
+
+    // Reset data and enable submit button
+    reset(data);
+  }
+
+  function preventDefault(data) {
+    data.evt && data.evt.preventDefault();
+    data.evt = null;
+  }
+
+  var disconnected = _.debounce(function() {
+    alert('Oops! This page has improperly configured forms. Please contact your website administrator to fix this issue.');
+  }, 100);
+
+  // Export module
+  return api;
+};
+
+},{"../plugins/xdomain-min":18,"./webflow-lib":7}],5:[function(require,module,exports){
+'use strict';
+
 /**
- * ----------------------------------------------------------------------
+ * Webflow: Google+ widget
+ */
+
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
+  var $doc = $(document);
+  var api = {};
+  var loaded;
+
+  api.ready = function() {
+    // Load Google+ API on the front-end
+    if (!Webflow.env() && !loaded) init();
+  };
+
+  function init() {
+    $doc.find('.w-widget-gplus').length && load();
+  }
+
+  function load() {
+    loaded = true;
+    $.getScript('https://apis.google.com/js/plusone.js');
+  }
+
+  // Export module
+  return api;
+};
+
+},{"./webflow-lib":7}],6:[function(require,module,exports){
+'use strict';
+
+/**
  * Webflow: Interactions
  */
-Webflow.define('ix', function ($, _) {
-  'use strict';
 
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
   var api = {};
   var designer;
   var $win = $(window);
   var namespace = '.w-ix';
-  var tram = window.tram;
+  var tram = $.tram;
   var env = Webflow.env;
-  var ios = env.ios;
   var inApp = env();
   var emptyFix = env.chrome && env.chrome < 35;
   var transNone = 'none 0s ease 0s';
   var introEvent = 'w-ix-intro' + namespace;
   var outroEvent = 'w-ix-outro' + namespace;
+  var fallbackProps = /width|height/;
   var eventQueue = [];
   var $subs = $();
   var config = {};
   var anchors = [];
   var loads = [];
   var readys = [];
-  var unique = 0;
-  var store;
+  var destroyed;
+
+  // Component types and proxy selectors
+  var components = {
+    tabs: '.w-tab-link, .w-tab-pane',
+    dropdown: '.w-dropdown',
+    slider: '.w-slide',
+    navbar: '.w-nav'
+  };
 
   // -----------------------------------
   // Module methods
 
-  api.init = function (list) {
-    setTimeout(function () { init(list); }, 1);
+  api.init = function(list) {
+    setTimeout(function() { configure(list); }, 1);
   };
 
-  api.preview = function () {
+  api.preview = function() {
     designer = false;
-    setTimeout(function () { init(window.__wf_ix); }, 1);
+    setTimeout(function() { configure(window.__wf_ix); }, 1);
   };
 
-  api.design = function () {
+  api.design = function() {
     designer = true;
+    api.destroy();
+  };
+
+  api.destroy = function() {
+    destroyed = true;
     $subs.each(teardown);
     Webflow.scroll.off(scroll);
     asyncEvents();
     anchors = [];
     loads = [];
     readys = [];
+  };
+
+  api.ready = function() {
+    // Ready should only be used after destroy, as a way to re-init
+    if (config && destroyed) {
+      destroyed = false;
+      init();
+    }
   };
 
   api.run = run;
@@ -469,18 +690,23 @@ Webflow.define('ix', function ($, _) {
   // -----------------------------------
   // Private methods
 
-  function init(list) {
+  function configure(list) {
     if (!list) return;
-    store = {};
 
-    // Map all interactions to a hash using slug as key.
+    // Map all interactions by slug
     config = {};
-    _.each(list, function (item) {
+    _.each(list, function(item) {
       config[item.slug] = item.value;
     });
 
+    // Init ix after config
+    init();
+  }
+
+  function init() {
     // Build each element's interaction keying from data attribute
     var els = $('[data-ix]');
+    if (!els.length) return;
     els.each(teardown);
     els.each(build);
 
@@ -491,10 +717,10 @@ Webflow.define('ix', function ($, _) {
     }
 
     // Handle loads or readys if they exist
-    if (loads.length) $win.on('load', runLoads);
+    if (loads.length) Webflow.load(runLoads);
     if (readys.length) setTimeout(runReadys, 1);
 
-    // Init module events
+    // Trigger queued events, must happen after init
     initEvents();
   }
 
@@ -505,14 +731,12 @@ Webflow.define('ix', function ($, _) {
     if (!ix) return;
     var triggers = ix.triggers;
     if (!triggers) return;
-    var state = store[id] || (store[id] = {});
-    var $proxy;
 
-    // Set initial styles, unless we detect an iOS device + any non-iOS triggers
-    var setStyles = !(ios && _.any(triggers, isNonIOS));
-    if (setStyles) api.style($el, ix.style);
+    // Set styles immediately to provide tram with starting transform values
+    api.style($el, ix.style);
 
-    _.each(triggers, function (trigger) {
+    _.each(triggers, function(trigger) {
+      var state = {};
       var type = trigger.type;
       var stepsB = trigger.stepsB && trigger.stepsB.length;
 
@@ -525,16 +749,15 @@ Webflow.define('ix', function ($, _) {
       }
 
       if (type == 'click') {
-        var stateKey = 'click:' + unique++;
-        if (trigger.descend) stateKey += ':descend';
-        if (trigger.siblings) stateKey += ':siblings';
-        if (trigger.selector) stateKey += ':' + trigger.selector;
+        $el.on('click' + namespace, function(evt) {
+          // Avoid late clicks on touch devices
+          if (!Webflow.validClick(evt.currentTarget)) return;
 
-        $el.on('click' + namespace, function (evt) {
+          // Prevent default on empty hash urls
           if ($el.attr('href') === '#') evt.preventDefault();
 
-          run(trigger, $el, { group: state[stateKey] ? 'B' : 'A' });
-          if (stepsB) state[stateKey] = !state[stateKey];
+          run(trigger, $el, { group: state.clicked ? 'B' : 'A' });
+          if (stepsB) state.clicked = !state.clicked;
         });
         $subs = $subs.add($el);
         return;
@@ -547,23 +770,6 @@ Webflow.define('ix', function ($, _) {
         return;
       }
 
-      if (type == 'tabs') {
-        $proxy = $el.closest('.w-tab-link, .w-tab-pane');
-        $proxy.on(introEvent, runA).on(outroEvent, runB);
-        $subs = $subs.add($proxy);
-        return;
-      }
-
-      if (type == 'slider') {
-        $proxy = $el.closest('.w-slide');
-        $proxy.on(introEvent, runA).on(outroEvent, runB);
-        $subs = $subs.add($proxy);
-        return;
-      }
-
-      // Ignore the following triggers on iOS devices
-      if (ios) return;
-
       if (type == 'scroll') {
         anchors.push({
           el: $el, trigger: trigger, state: { active: false },
@@ -572,11 +778,17 @@ Webflow.define('ix', function ($, _) {
         });
         return;
       }
-    });
-  }
 
-  function isNonIOS(trigger) {
-    return trigger.type == 'scroll';
+      // Check for a proxy component selector
+      // type == [tabs, dropdown, slider, navbar]
+      var proxy = components[type];
+      if (proxy) {
+        var $proxy = $el.closest(proxy);
+        $proxy.on(introEvent, runA).on(outroEvent, runB);
+        $subs = $subs.add($proxy);
+        return;
+      }
+    });
   }
 
   function convert(offset) {
@@ -703,7 +915,9 @@ Webflow.define('ix', function ($, _) {
     if (transitions) {
       transitions = transitions.split(',');
       for (var i = 0; i < transitions.length; i++) {
-        _tram[addMethod](transitions[i]);
+        var transition = transitions[i];
+        var options = fallbackProps.test(transition) ? { fallback: true } : null;
+        _tram[addMethod](transition, options);
       }
     }
 
@@ -719,7 +933,7 @@ Webflow.define('ix', function ($, _) {
 
       // If we have started, wrap set() in then() and reset queue
       if (meta.start) {
-        _tram.then(function () {
+        _tram.then(function() {
           var queue = this.queue;
           this.set(clean);
           if (clean.display) {
@@ -756,7 +970,7 @@ Webflow.define('ix', function ($, _) {
 
         // If we've already started, we need to wrap it in a then()
         if (meta.start) {
-          _tram.then(function () {
+          _tram.then(function() {
             var queue = this.queue;
             this.set({ display: display }).redraw();
             Webflow.redraw.up();
@@ -783,10 +997,10 @@ Webflow.define('ix', function ($, _) {
     el.css('transition', '');
     var computed = el.css('transition');
 
-    // If computed is disabled, clear upstream
+    // If computed is set to none, clear upstream
     if (computed === transNone) computed = _tram.upstream = null;
 
-    // Disable upstream temporarily
+    // Set upstream transition to none temporarily
     _tram.upstream = transNone;
 
     // Set values immediately
@@ -816,15 +1030,15 @@ Webflow.define('ix', function ($, _) {
 
   // Events used by other webflow modules
   var events = {
-    reset: function (i, el) {
+    reset: function(i, el) {
       el.__wf_intro = null;
     },
-    intro: function (i, el) {
+    intro: function(i, el) {
       if (el.__wf_intro) return;
       el.__wf_intro = true;
       $(el).triggerHandler(introEvent);
     },
-    outro: function (i, el) {
+    outro: function(i, el) {
       if (!el.__wf_intro) return;
       el.__wf_intro = null;
       $(el).triggerHandler(outroEvent);
@@ -844,8 +1058,8 @@ Webflow.define('ix', function ($, _) {
 
   // Replace events with async methods prior to init
   function asyncEvents() {
-    _.each(events, function (func, name) {
-      api.events[name] = function (i, el) {
+    _.each(events, function(func, name) {
+      api.events[name] = function(i, el) {
         eventQueue.push([func, el]);
       };
     });
@@ -855,434 +1069,1062 @@ Webflow.define('ix', function ($, _) {
 
   // Export module
   return api;
-});
+};
+
+},{"./webflow-lib":7}],7:[function(require,module,exports){
+'use strict';
+
 /**
- * ----------------------------------------------------------------------
- * Webflow: Touch events
+ * Webflow: Core site library
  */
-Webflow.define('touch', function ($, _) {
-  'use strict';
 
-  var api = {};
-  api.init = function (el) {
-    el = typeof el === 'string' ? $(el).get(0) : el;
-    return el ? new Touch(el) : null;
-  };
+var Webflow = {};
+var modules = {};
+var primary = [];
+var secondary = window.Webflow || [];
+var $ = window.jQuery;
+var $win = $(window);
+var $doc = $(document);
+var isFunction = $.isFunction;
+var _ = Webflow._ = require('../plugins/underscore-custom');
+var tram = require('../plugins/tram-min') && $.tram;
+var domready = false;
+var Modernizr = window.Modernizr;
+var noop = function() {};
+tram.config.hideBackface = false;
+tram.config.keepInherited = true;
 
-  function Touch(el) {
-    var active = false;
-    var dirty = false;
-    var useTouch = false;
-    var thresholdX = Math.min(Math.round(window.innerWidth * 0.04), 40);
-    var startX, startY, lastX;
-
-    el.addEventListener('touchstart', start, false);
-    el.addEventListener('touchmove', move, false);
-    el.addEventListener('touchend', end, false);
-    el.addEventListener('touchcancel', cancel, false);
-    el.addEventListener('mousedown', start, false);
-    el.addEventListener('mousemove', move, false);
-    el.addEventListener('mouseup', end, false);
-    el.addEventListener('mouseout', cancel, false);
-
-    function start(evt) {
-      // We don’t handle multi-touch events yet.
-      var touches = evt.touches;
-      if (touches && touches.length > 1) {
-        return;
-      }
-
-      active = true;
-      dirty = false;
-
-      if (touches) {
-        useTouch = true;
-        startX = touches[0].clientX;
-        startY = touches[0].clientY;
-      } else {
-        startX = evt.clientX;
-        startY = evt.clientY;
-      }
-
-      lastX = startX;
-    }
-
-    function move(evt) {
-      if (!active) return;
-
-      if (useTouch && evt.type === 'mousemove') {
-        evt.preventDefault();
-        evt.stopPropagation();
-        return;
-      }
-
-      var touches = evt.touches;
-      var x = touches ? touches[0].clientX : evt.clientX;
-      var y = touches ? touches[0].clientY : evt.clientY;
-
-      var velocityX = x - lastX;
-      lastX = x;
-
-      if (Math.abs(velocityX) > thresholdX) {
-        triggerEvent('swipe', evt, { direction: velocityX > 0 ? 'right' : 'left' });
-        cancel();
-      }
-
-      // If pointer moves more than 10px flag to cancel tap
-      if (Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) {
-        dirty = true;
-      }
-    }
-
-    function end(evt) {
-      if (!active) return;
-
-      if (useTouch && evt.type === 'mouseup') {
-        evt.preventDefault();
-        evt.stopPropagation();
-        useTouch = false;
-        return;
-      }
-
-      if (!dirty) triggerEvent('tap', evt);
-    }
-
-    function cancel(evt) {
-      active = false;
-    }
-
-    function destroy() {
-      el.removeEventListener('touchstart', start, false);
-      el.removeEventListener('touchmove', move, false);
-      el.removeEventListener('touchend', end, false);
-      el.removeEventListener('touchcancel', cancel, false);
-      el.removeEventListener('mousedown', start, false);
-      el.removeEventListener('mousemove', move, false);
-      el.removeEventListener('mouseup', end, false);
-      el.removeEventListener('mouseout', cancel, false);
-      el = null;
-    }
-
-    // Public instance methods
-    this.destroy = destroy;
-  }
-
-  // Wrap native event to supoprt preventdefault + stopPropagation
-  function triggerEvent(type, evt, data) {
-    var newEvent = $.Event(type, { originalEvent: evt });
-    $(evt.target).trigger(newEvent, data);
-  }
-
-  // Listen for touch events on all nodes by default.
-  api.instance = api.init(document);
-
-  // Export module
-  return api;
-});
 /**
- * ----------------------------------------------------------------------
- * Webflow: Forms
+ * Webflow.define - Define a named module
+ * @param  {string} name
+ * @param  {function} factory
+ * @return {object}
  */
-Webflow.define('forms', function ($, _) {
-  'use strict';
+Webflow.define = function(name, factory) {
+  if (modules[name]) unbindModule(modules[name]);
+  var instance = modules[name] = factory($, _) || {};
+  bindModule(instance);
+  return instance;
+};
 
-  var api = {};
-  var $doc = $(document);
-  var $forms;
-  var loc = window.location;
-  var retro = window.XDomainRequest && !window.atob;
-  var namespace = '.w-form';
-  var siteId;
-  var emailField = /e(\-)?mail/i;
-  var emailValue = /^\S+@\S+$/;
-  var alert = window.alert;
+/**
+ * Webflow.require - Require a named module
+ * @param  {string} name
+ * @return {object}
+ */
+Webflow.require = function(name) {
+  return modules[name];
+};
 
-  // MailChimp domains: list-manage.com + mirrors
-  var chimpRegex = /list-manage[1-9]?.com/i;
-
-  api.ready = function () {
-    // Init forms
-    init();
-
-    // Wire events
-    listen && listen();
-    listen = null;
-  };
-
-  api.preview = api.design = function () {
-    init();
-  };
-
-  function init() {
-    siteId = $('html').attr('data-wf-site');
-
-    $forms = $(namespace + ' form');
-    $forms.each(build);
+function bindModule(module) {
+  // If running in Webflow app, subscribe to design/preview events
+  if (Webflow.env()) {
+    isFunction(module.design) && $win.on('__wf_design', module.design);
+    isFunction(module.preview) && $win.on('__wf_preview', module.preview);
   }
-
-  function build(i, el) {
-    // Store form state using namespace
-    var $el = $(el);
-    var data = $.data(el, namespace);
-    if (!data) data = $.data(el, namespace, { form: $el }); // data.form
-
-    reset(data);
-    var wrap = $el.closest('div.w-form');
-    data.done = wrap.find('> .w-form-done');
-    data.fail = wrap.find('> .w-form-fail');
-
-    var action = data.action = $el.attr('action');
-    data.handler = null;
-    data.redirect = $el.attr('data-redirect');
-
-    // MailChimp form
-    if (chimpRegex.test(action)) { data.handler = submitMailChimp; return; }
-
-    // Custom form action
-    if (action) return;
-
-    // Webflow form
-    if (siteId) { data.handler = submitWebflow; return; }
-
-    // Alert for disconnected Webflow forms
-    disconnected();
+  // Subscribe to front-end destroy event
+  isFunction(module.destroy) && $win.on('__wf_destroy', module.destroy);
+  // Look for a ready method on module
+  if (module.ready && isFunction(module.ready)) {
+    // If domready has already happened, call ready method
+    if (domready) module.ready();
+    // Otherwise push ready method into primary queue
+    else primary.push(module.ready);
   }
+}
 
-  function listen() {
-    // Handle form submission for Webflow forms
-    $doc.on('submit', namespace + ' form', function(evt) {
-      var data = $.data(this, namespace);
-      if (data.handler) {
-        data.evt = evt;
-        data.handler(data);
-      }
+function unbindModule(module) {
+  // Unsubscribe module from window events
+  isFunction(module.design) && $win.off('__wf_design', module.design);
+  isFunction(module.preview) && $win.off('__wf_preview', module.preview);
+  isFunction(module.destroy) && $win.off('__wf_destroy', module.destroy);
+
+  // Remove from primary queue if domready hasn't happened
+  if (!domready) {
+    primary = _.filter(primary, function(readyFn) {
+      return readyFn !== module.ready;
     });
   }
+}
 
-  // Reset data common to all submit handlers
-  function reset(data) {
-    var btn = data.btn = data.form.find(':input[type="submit"]');
-    data.wait = data.btn.attr('data-wait') || null;
-    data.success = false;
-    btn.prop('disabled', false);
-    data.label && btn.val(data.label);
+/**
+ * Webflow.push - Add a ready handler into secondary queue
+ * @param {function} ready  Callback to invoke on domready
+ */
+Webflow.push = function(ready) {
+  // If domready has already happened, invoke handler
+  if (domready) {
+    isFunction(ready) && ready();
+    return;
   }
+  // Otherwise push into secondary queue
+  secondary.push(ready);
+};
 
-  // Disable submit button
-  function disableBtn(data) {
-    var btn = data.btn;
-    var wait = data.wait;
-    btn.prop('disabled', true);
-    // Show wait text and store previous label
-    if (wait) {
-      data.label = btn.val();
-      btn.val(wait);
+/**
+ * Webflow.env - Get the state of the Webflow app
+ * @param {string} mode [optional]
+ * @return {boolean}
+ */
+Webflow.env = function(mode) {
+  var designFlag = window.__wf_design;
+  var inApp = typeof designFlag != 'undefined';
+  if (!mode) return inApp;
+  if (mode == 'design') return inApp && designFlag;
+  if (mode == 'preview') return inApp && !designFlag;
+  if (mode == 'slug') return inApp && window.__wf_slug;
+  if (mode == 'editor') return window.WebflowEditor;
+  if (mode == 'test') return window.__wf_test;
+};
+
+// Feature detects + browser sniffs  ಠ_ಠ
+var userAgent = navigator.userAgent.toLowerCase();
+var appVersion = navigator.appVersion.toLowerCase();
+var touch = Webflow.env.touch = ('ontouchstart' in window) || window.DocumentTouch && document instanceof window.DocumentTouch;
+var chrome = Webflow.env.chrome = /chrome/.test(userAgent) && /Google/.test(navigator.vendor) && parseInt(appVersion.match(/chrome\/(\d+)\./)[1], 10);
+var ios = Webflow.env.ios = Modernizr && Modernizr.ios;
+Webflow.env.safari = /safari/.test(userAgent) && !chrome && !ios;
+
+// Maintain current touch target to prevent late clicks on touch devices
+var touchTarget;
+// Listen for both events to support touch/mouse hybrid devices
+touch && $doc.on('touchstart mousedown', function(evt) {
+  touchTarget = evt.target;
+});
+
+/**
+ * Webflow.validClick - validate click target against current touch target
+ * @param  {HTMLElement} clickTarget  Element being clicked
+ * @return {Boolean}  True if click target is valid (always true on non-touch)
+ */
+Webflow.validClick = touch ? function(clickTarget) {
+  return clickTarget === touchTarget || $.contains(clickTarget, touchTarget);
+} : function() { return true; };
+
+/**
+ * Webflow.resize, Webflow.scroll - throttled event proxies
+ */
+var resizeEvents = 'resize.webflow orientationchange.webflow load.webflow';
+var scrollEvents = 'scroll.webflow ' + resizeEvents;
+Webflow.resize = eventProxy($win, resizeEvents);
+Webflow.scroll = eventProxy($win, scrollEvents);
+Webflow.redraw = eventProxy();
+
+// Create a proxy instance for throttled events
+function eventProxy(target, types) {
+
+  // Set up throttled method (using custom frame-based _.throttle)
+  var handlers = [];
+  var proxy = {};
+  proxy.up = _.throttle(function(evt) {
+    _.each(handlers, function(h) { h(evt); });
+  });
+
+  // Bind events to target
+  if (target && types) target.on(types, proxy.up);
+
+  /**
+   * Add an event handler
+   * @param  {function} handler
+   */
+  proxy.on = function(handler) {
+    if (typeof handler != 'function') return;
+    if (_.contains(handlers, handler)) return;
+    handlers.push(handler);
+  };
+
+  /**
+   * Remove an event handler
+   * @param  {function} handler
+   */
+  proxy.off = function(handler) {
+    // If no arguments supplied, clear all handlers
+    if (!arguments.length) {
+      handlers = [];
+      return;
     }
+    // Otherwise, remove handler from the list
+    handlers = _.filter(handlers, function(h) {
+      return h !== handler;
+    });
+  };
+
+  return proxy;
+}
+
+// Provide optional IX events to components
+Webflow.ixEvents = function() {
+  var ix = Webflow.require('ix');
+  return (ix && ix.events) || {
+    reset: noop,
+    intro: noop,
+    outro: noop
+  };
+};
+
+// Webflow.location - Wrap window.location in api
+Webflow.location = function(url) {
+  window.location = url;
+};
+
+// Webflow.app - Designer-specific methods
+Webflow.app = Webflow.env() ? {} : null;
+if (Webflow.app) {
+
+  // Trigger redraw for specific elements
+  var redraw = new Event('__wf_redraw');
+  Webflow.app.redrawElement = function(i, el) { el.dispatchEvent(redraw); };
+
+  // Webflow.location - Re-route location change to trigger an event
+  Webflow.location = function(url) {
+    window.dispatchEvent(new CustomEvent('__wf_location', { detail: url }));
+  };
+}
+
+// Webflow.ready - Call primary and secondary handlers
+Webflow.ready = function() {
+  domready = true;
+  _.each(primary.concat(secondary), callReady);
+  // Trigger resize
+  Webflow.resize.up();
+};
+
+function callReady(readyFn) {
+  isFunction(readyFn) && readyFn();
+}
+
+/**
+ * Webflow.load - Add a window load handler that will run even if load event has already happened
+ * @param  {function} handler
+ */
+var deferLoad;
+Webflow.load = function(handler) {
+  deferLoad.then(handler);
+};
+
+function bindLoad() {
+  // Reject any previous deferred (to support destroy)
+  if (deferLoad) {
+    deferLoad.reject();
+    $win.off('load', deferLoad.resolve);
+  }
+  // Create deferred and bind window load event
+  deferLoad = new $.Deferred();
+  $win.on('load', deferLoad.resolve);
+}
+
+// Webflow.destroy - Trigger a destroy event for all modules
+Webflow.destroy = function() {
+  $win.triggerHandler('__wf_destroy');
+
+  // Unbind and clear modules
+  _.each(modules, unbindModule);
+  modules = {};
+
+  // Clear any proxy event handlers
+  Webflow.resize.off();
+  Webflow.scroll.off();
+  Webflow.redraw.off();
+
+  // If load event has not yet fired, replace the deferred
+  if (deferLoad.state() == 'pending') bindLoad();
+};
+
+// Listen for domready
+$(Webflow.ready);
+
+// Listen for window.onload and resolve deferred
+bindLoad();
+
+// Export commonjs module
+module.exports = Webflow;
+
+},{"../plugins/tram-min":16,"../plugins/underscore-custom":17}],8:[function(require,module,exports){
+'use strict';
+
+/**
+ * Webflow: Lightbox component
+ */
+
+var Webflow = require('./webflow-lib');
+
+function createLightbox(window, document, $, undefined) {
+  var tram = $.tram;
+  var isArray = Array.isArray;
+  var namespace = 'w-lightbox';
+  var prefix = namespace + '-';
+  var prefixRegex = /(^|\s+)/g;
+
+  // Array of objects describing items to be displayed.
+  var items = [];
+
+  // Index of the currently displayed item.
+  var currentIndex;
+
+  // Object holding references to jQuery wrapped nodes.
+  var $refs;
+
+  // Instance of Spinner
+  var spinner;
+
+  function lightbox(thing, index) {
+    items = isArray(thing) ? thing : [thing];
+
+    if (!$refs) {
+      lightbox.build();
+    }
+
+    if (items.length > 1) {
+      $refs.items = $refs.empty;
+
+      items.forEach(function (item) {
+        var $thumbnail = dom('thumbnail');
+        var $item = dom('item').append($thumbnail);
+
+        $refs.items = $refs.items.add($item);
+
+        loadImage(item.thumbnailUrl || item.url, function ($image) {
+          if ($image.prop('width') > $image.prop('height')) {
+            addClass($image, 'wide');
+          } else {
+            addClass($image, 'tall');
+          }
+          $thumbnail.append(addClass($image, 'thumbnail-image'));
+        });
+      });
+
+      $refs.strip.empty().append($refs.items);
+      addClass($refs.content, 'group');
+    }
+
+    tram(
+      // Focus the lightbox to receive keyboard events.
+      removeClass($refs.lightbox, 'hide').focus()
+    )
+      .add('opacity .3s')
+      .start({opacity: 1});
+
+    // Prevent document from scrolling while lightbox is active.
+    addClass($refs.html, 'noscroll');
+
+    return lightbox.show(index || 0);
   }
 
-  // Find form fields, validate, and set value pairs
-  function findFields(form, result) {
-    var status = null;
-    result = result || {};
+  /**
+   * Creates the DOM structure required by the lightbox.
+   */
+  lightbox.build = function () {
+    // In case `build` is called more than once.
+    lightbox.destroy();
 
-    // The ":input" selector is a jQuery shortcut to select all inputs, selects, textareas
-    form.find(':input:not([type="submit"])').each(function(i, el) {
-      var field = $(el);
-      var type = field.attr('type');
-      var name = field.attr('data-name') || field.attr('name') || ('Field ' + (i + 1));
-      var value = field.val();
+    $refs = {
+      html: $(document.documentElement),
+      // Empty jQuery object can be used to build new ones using `.add`.
+      empty: $()
+    };
 
-      if (type == 'checkbox') {
-        value = field.is(':checked');
-      } if (type == 'radio') {
-        // Radio group value already processed
-        if (result[name] === null || typeof result[name] == 'string') {
+    $refs.arrowLeft = dom('control left inactive');
+    $refs.arrowRight = dom('control right inactive');
+    $refs.close = dom('control close');
+
+    $refs.spinner = dom('spinner');
+    $refs.strip = dom('strip');
+
+    spinner = new Spinner($refs.spinner, prefixed('hide'));
+
+    $refs.content = dom('content')
+      .append($refs.spinner, $refs.arrowLeft, $refs.arrowRight, $refs.close);
+
+    $refs.container = dom('container')
+      .append($refs.content, $refs.strip);
+
+    $refs.lightbox = dom('backdrop hide')
+      .append($refs.container);
+
+      // We are delegating events for performance reasons and also
+      // to not have to reattach handlers when images change.
+      $refs.strip.on('tap', selector('item'), itemTapHandler);
+      $refs.content
+        .on('swipe', swipeHandler)
+        .on('tap', selector('left'), handlerPrev)
+        .on('tap', selector('right'), handlerNext)
+        .on('tap', selector('close'), handlerHide)
+        .on('tap', selector('image, caption'), handlerNext);
+      $refs.container
+        .on('tap', selector('view, strip'), handlerHide)
+        // Prevent images from being dragged around.
+        .on('dragstart', selector('img'), preventDefault);
+      $refs.lightbox
+        .on('keydown', keyHandler)
+        // IE loses focus to inner nodes without letting us know.
+        .on('focusin', focusThis);
+
+    // The `tabindex` attribute is needed to enable non-input elements
+    // to receive keyboard events.
+    $('body').append($refs.lightbox.prop('tabIndex', 0));
+
+    return lightbox;
+  };
+
+  /**
+   * Dispose of DOM nodes created by the lightbox.
+   */
+  lightbox.destroy = function () {
+    if (!$refs) {
+      return;
+    }
+
+    // Event handlers are also removed.
+    $refs.lightbox.remove();
+    $refs = undefined;
+  };
+
+  /**
+   * Show a specific item.
+   */
+  lightbox.show = function (index) {
+    // Bail if we are already showing this item.
+    if (index === currentIndex) {
+      return;
+    }
+
+    var item = items[index];
+    if (!item) { return lightbox.hide(); }
+
+    var previousIndex = currentIndex;
+    currentIndex = index;
+    spinner.show();
+
+    // For videos, load an empty SVG with the video dimensions to preserve
+    // the video’s aspect ratio while being responsive.
+    var url = item.html && svgDataUri(item.width, item.height) || item.url;
+    loadImage(url, function ($image) {
+      // Make sure this is the last item requested to be shown since
+      // images can finish loading in a different order than they were
+      // requested in.
+      if (index != currentIndex) {
+        return;
+      }
+
+      var $figure = dom('figure', 'figure').append(addClass($image, 'image'));
+      var $frame = dom('frame').append($figure);
+      var $newView = dom('view').append($frame);
+      var $html, isIframe;
+
+      if (item.html) {
+        $html = $(item.html);
+        isIframe = $html.is('iframe');
+
+        if (isIframe) {
+          $html.on('load', transitionToNewView);
+        }
+
+        $figure.append(addClass($html, 'embed'));
+      }
+
+      if (item.caption) {
+        $figure.append(dom('caption', 'figcaption').text(item.caption));
+      }
+
+      $refs.spinner.before($newView);
+
+      if (!isIframe) {
+        transitionToNewView();
+      }
+
+      function transitionToNewView() {
+        spinner.hide();
+
+        if (index != currentIndex) {
+          $newView.remove();
           return;
         }
 
-        value = form.find('input[name="' + field.attr('name') + '"]:checked').val() || null;
+
+        toggleClass($refs.arrowLeft, 'inactive', index <= 0);
+        toggleClass($refs.arrowRight, 'inactive', index >= items.length - 1);
+
+        if ($refs.view) {
+          tram($refs.view)
+            .add('opacity .3s')
+            .start({opacity: 0})
+            .then(remover($refs.view));
+
+          tram($newView)
+            .add('opacity .3s')
+            .add('transform .3s')
+            .set({x: index > previousIndex ? '80px' : '-80px'})
+            .start({opacity: 1, x: 0});
+        } else {
+          $newView.css('opacity', 1);
+        }
+
+        $refs.view = $newView;
+
+        if ($refs.items) {
+          // Mark proper thumbnail as active
+          addClass(removeClass($refs.items, 'active').eq(index), 'active');
+        }
+      }
+    });
+
+    return lightbox;
+  };
+
+  /**
+   * Hides the lightbox.
+   */
+  lightbox.hide = function () {
+    tram($refs.lightbox)
+      .add('opacity .3s')
+      .start({opacity: 0})
+      .then(hideLightbox);
+
+    return lightbox;
+  };
+
+  lightbox.prev = function () {
+    if (currentIndex > 0) {
+      lightbox.show(currentIndex - 1);
+    }
+  };
+
+  lightbox.next = function () {
+    if (currentIndex < items.length - 1) {
+      lightbox.show(currentIndex + 1);
+    }
+  };
+
+  function createHandler(action) {
+    return function (event) {
+      // We only care about events triggered directly on the bound selectors.
+      if (this != event.target) {
+        return;
       }
 
-      if (typeof value == 'string') value = $.trim(value);
-      result[name] = value;
-      status = status || getStatus(field, name, value);
-    });
+      event.stopPropagation();
+      event.preventDefault();
 
-    return status;
-  }
-
-  function getStatus(field, name, value) {
-    var status = null;
-    if (!field.attr('required')) return null;
-    if (!value) status = 'Please fill out the required field: ' + name;
-    else if (emailField.test(name) || emailField.test(field.attr('type'))) {
-      if (!emailValue.test(value)) status = 'Please enter a valid email address for: ' + name;
-    }
-    return status;
-  }
-
-  // Submit form to Webflow
-  function submitWebflow(data) {
-    reset(data);
-
-    var form = data.form;
-    var payload = {
-      name: form.attr('data-name') || form.attr('name') || 'Untitled Form',
-      source: loc.href,
-      test: Webflow.env(),
-      fields: {}
+      action();
     };
-
-    preventDefault(data);
-
-    // Find & populate all fields
-    var status = findFields(form, payload.fields);
-    if (status) return alert(status);
-
-    // Disable submit button
-    disableBtn(data);
-
-    // Read site ID
-    // NOTE: If this site is exported, the HTML tag must retain the data-wf-site attribute for forms to work
-    if (!siteId) { afterSubmit(data); return; }
-    var url = 'https://webflow.com/api/v1/form/' + siteId;
-
-    // Work around same-protocol IE XDR limitation
-    if (retro && url.indexOf('https://webflow.com') >= 0) {
-      url = url.replace('https://webflow.com/', 'http://data.webflow.com/');
-    }
-
-    $.ajax({
-      url: url,
-      type: 'POST',
-      data: payload,
-      dataType: 'json',
-      crossDomain: true
-    }).done(function () {
-      data.success = true;
-      afterSubmit(data);
-    }).fail(function () {
-      afterSubmit(data);
-    });
   }
 
-  // Submit form to MailChimp
-  function submitMailChimp(data) {
-    reset(data);
+  var handlerPrev = createHandler(lightbox.prev);
+  var handlerNext = createHandler(lightbox.next);
+  var handlerHide = createHandler(lightbox.hide);
 
-    var form = data.form;
-    var payload = {};
+  var itemTapHandler = function(event) {
+    var index = $(this).index();
 
-    // Skip Ajax submission if http/s mismatch, fallback to POST instead
-    if (/^https/.test(loc.href) && !/^https/.test(data.action)) {
-      form.attr('method', 'post');
+    event.preventDefault();
+    lightbox.show(index);
+  };
+
+  var swipeHandler = function (event, data) {
+    // Prevent scrolling.
+    event.preventDefault();
+
+    if (data.direction == 'left') {
+      lightbox.next();
+    } else if (data.direction == 'right') {
+      lightbox.prev();
+    }
+  };
+
+  var focusThis = function () {
+    this.focus();
+  };
+
+  function preventDefault(event) {
+    event.preventDefault();
+  }
+
+  function keyHandler(event) {
+    var keyCode = event.keyCode;
+
+    // [esc]
+    if (keyCode == 27) {
+      lightbox.hide();
+    }
+
+    // [◀]
+    else if (keyCode == 37) {
+      lightbox.prev();
+    }
+
+    // [▶]
+    else if (keyCode == 39) {
+      lightbox.next();
+    }
+  }
+
+  function hideLightbox() {
+    removeClass($refs.html, 'noscroll');
+    addClass($refs.lightbox, 'hide');
+    $refs.strip.empty();
+    $refs.view && $refs.view.remove();
+
+    // Reset some stuff
+    removeClass($refs.content, 'group');
+    addClass($refs.arrowLeft, 'inactive');
+    addClass($refs.arrowRight, 'inactive');
+
+    currentIndex = $refs.view = undefined;
+  }
+
+  function loadImage(url, callback) {
+    var $image = dom('img', 'img');
+
+    $image.one('load', function () {
+      callback($image);
+    });
+
+    // Start loading image.
+    $image.attr('src', url);
+
+    return $image;
+  }
+
+  function remover($element) {
+    return function () {
+      $element.remove();
+    };
+  }
+
+  /**
+   * Spinner
+   */
+  function Spinner($spinner, className, delay) {
+    this.$element = $spinner;
+    this.className = className;
+    this.delay = delay || 200;
+    this.hide();
+  }
+
+  Spinner.prototype.show = function () {
+    var spinner = this;
+
+    // Bail if we are already showing the spinner.
+    if (spinner.timeoutId) {
       return;
     }
 
-    preventDefault(data);
+    spinner.timeoutId = setTimeout(function () {
+      spinner.$element.removeClass(spinner.className);
+      delete spinner.timeoutId;
+    }, spinner.delay);
+  };
 
-    // Find & populate all fields
-    var status = findFields(form, payload);
-    if (status) return alert(status);
-
-    // Disable submit button
-    disableBtn(data);
-
-    // Use special format for MailChimp params
-    var fullName;
-    _.each(payload, function (value, key) {
-      if (emailField.test(key)) payload.EMAIL = value;
-      if (/^((full[ _-]?)?name)$/i.test(key)) fullName = value;
-      if (/^(first[ _-]?name)$/i.test(key)) payload.FNAME = value;
-      if (/^(last[ _-]?name)$/i.test(key)) payload.LNAME = value;
-    });
-
-    if (fullName && !payload.FNAME) {
-      fullName = fullName.split(' ');
-      payload.FNAME = fullName[0];
-      payload.LNAME = payload.LNAME || fullName[1];
-    }
-
-    // Use the (undocumented) MailChimp jsonp api
-    var url = data.action.replace('/post?', '/post-json?') + '&c=?';
-    // Add special param to prevent bot signups
-    var userId = url.indexOf('u=')+2;
-    userId = url.substring(userId, url.indexOf('&', userId));
-    var listId = url.indexOf('id=')+3;
-    listId = url.substring(listId, url.indexOf('&', listId));
-    payload['b_' + userId + '_' + listId] = '';
-
-    $.ajax({
-      url: url,
-      data: payload,
-      dataType: 'jsonp'
-    }).done(function (resp) {
-      data.success = (resp.result == 'success' || /already/.test(resp.msg));
-      if (!data.success) console.info('MailChimp error: ' + resp.msg);
-      afterSubmit(data);
-    }).fail(function () {
-      afterSubmit(data);
-    });
-  }
-
-  // Common callback which runs after all Ajax submissions
-  function afterSubmit(data) {
-    var form = data.form;
-    var wrap = form.closest('div.w-form');
-    var redirect = data.redirect;
-    var success = data.success;
-
-    // Redirect to a success url if defined
-    if (success && redirect) {
-      Webflow.location(redirect);
+  Spinner.prototype.hide = function () {
+    var spinner = this;
+    if (spinner.timeoutId) {
+      clearTimeout(spinner.timeoutId);
+      delete spinner.timeoutId;
       return;
     }
 
-    // Show or hide status divs
-    data.done.toggle(success);
-    data.fail.toggle(!success);
+    spinner.$element.addClass(spinner.className);
+  };
 
-    // Hide form on success
-    form.toggle(!success);
-
-    // Reset data and enable submit button
-    reset(data);
+  function prefixed(string, isSelector) {
+    return string.replace(prefixRegex, (isSelector ? ' .' : ' ') + prefix);
   }
 
-  function preventDefault(data) {
-    data.evt && data.evt.preventDefault();
-    data.evt = null;
+  function selector(string) {
+    return prefixed(string, true);
   }
 
-  var disconnected = _.debounce(function () {
-    alert('Oops! This page has a form that is powered by Webflow, but important code was removed that is required to make the form work. Please contact support@webflow.com to fix this issue.');
-  }, 100);
+  /**
+   * jQuery.addClass with auto-prefixing
+   * @param  {jQuery} Element to add class to
+   * @param  {string} Class name that will be prefixed and added to element
+   * @return {jQuery}
+   */
+  function addClass($element, className) {
+    return $element.addClass(prefixed(className));
+  }
+
+  /**
+   * jQuery.removeClass with auto-prefixing
+   * @param  {jQuery} Element to remove class from
+   * @param  {string} Class name that will be prefixed and removed from element
+   * @return {jQuery}
+   */
+  function removeClass($element, className) {
+    return $element.removeClass(prefixed(className));
+  }
+
+  /**
+   * jQuery.toggleClass with auto-prefixing
+   * @param  {jQuery}  Element where class will be toggled
+   * @param  {string}  Class name that will be prefixed and toggled
+   * @param  {boolean} Optional boolean that determines if class will be added or removed
+   * @return {jQuery}
+   */
+  function toggleClass($element, className, shouldAdd) {
+    return $element.toggleClass(prefixed(className), shouldAdd);
+  }
+
+  /**
+   * Create a new DOM element wrapped in a jQuery object,
+   * decorated with our custom methods.
+   * @param  {string} className
+   * @param  {string} [tag]
+   * @return {jQuery}
+   */
+  function dom(className, tag) {
+    return addClass($(document.createElement(tag || 'div')), className);
+  }
+
+  function isObject(value) {
+    return typeof value == 'object' && null != value && !isArray(value);
+  }
+
+  function svgDataUri(width, height) {
+    var svg = '<svg xmlns="http://www.w3.org/2000/svg" width="' + width + '" height="' + height + '"/>';
+    return 'data:image/svg+xml;charset=utf-8,' + encodeURI(svg);
+  }
+
+  // Compute some dimensions manually for iOS, because of buggy support for VH.
+  // Also, Android built-in browser does not support viewport units.
+  (function () {
+    var ua = window.navigator.userAgent;
+    var iOS = /(iPhone|iPod|iPad).+AppleWebKit/i.test(ua);
+    var android = ua.indexOf('Android ') > -1 && ua.indexOf('Chrome') == -1;
+
+    if (!iOS && !android) {
+      return;
+    }
+
+    var styleNode = document.createElement('style');
+    document.head.appendChild(styleNode);
+    window.addEventListener('orientationchange', refresh, true);
+
+    function refresh() {
+      var vh = window.innerHeight;
+      var vw = window.innerWidth;
+      var content =
+        '.w-lightbox-content, .w-lightbox-view, .w-lightbox-view:before {' +
+          'height:' + vh + 'px' +
+        '}' +
+        '.w-lightbox-view {' +
+          'width:' + vw + 'px' +
+        '}' +
+        '.w-lightbox-group, .w-lightbox-group .w-lightbox-view, .w-lightbox-group .w-lightbox-view:before {' +
+          'height:' + (0.86 * vh) + 'px' +
+        '}' +
+        '.w-lightbox-image {' +
+          'max-width:' + vw + 'px;' +
+          'max-height:' + vh + 'px' +
+        '}' +
+        '.w-lightbox-group .w-lightbox-image {' +
+          'max-height:' + (0.86 * vh) + 'px' +
+        '}' +
+        '.w-lightbox-strip {' +
+          'padding: 0 ' + (0.01 * vh) + 'px' +
+        '}' +
+        '.w-lightbox-item {' +
+          'width:' + (0.1 * vh) + 'px;' +
+          'padding:' + (0.02 * vh) + 'px ' + (0.01 * vh) + 'px' +
+        '}' +
+        '.w-lightbox-thumbnail {' +
+          'height:' + (0.1 * vh) + 'px' +
+        '}' +
+        '@media (min-width: 768px) {' +
+          '.w-lightbox-content, .w-lightbox-view, .w-lightbox-view:before {' +
+            'height:' + (0.96 * vh) + 'px' +
+          '}' +
+          '.w-lightbox-content {' +
+            'margin-top:' + (0.02 * vh) + 'px' +
+          '}' +
+          '.w-lightbox-group, .w-lightbox-group .w-lightbox-view, .w-lightbox-group .w-lightbox-view:before {' +
+            'height:' + (0.84 * vh) + 'px' +
+          '}' +
+          '.w-lightbox-image {' +
+            'max-width:' + (0.96 * vw) + 'px;' +
+            'max-height:' + (0.96 * vh) + 'px' +
+          '}' +
+          '.w-lightbox-group .w-lightbox-image {' +
+            'max-width:' + (0.823 * vw) + 'px;' +
+            'max-height:' + (0.84 * vh) + 'px' +
+          '}' +
+        '}';
+
+      styleNode.textContent = content;
+    }
+
+    refresh();
+  })();
+
+  return lightbox;
+}
+
+module.exports = function($, _) {
+  var api = {};
+  var lightbox = createLightbox(window, document, $);
+  var $doc = $(document);
+  var $body;
+  var $lightboxes;
+  var designer;
+  var inApp = Webflow.env();
+  var namespace = '.w-lightbox';
+  var groups;
+
+  // -----------------------------------
+  // Module methods
+
+  api.ready = api.design = api.preview = init;
+
+  // -----------------------------------
+  // Private methods
+
+  function init() {
+    designer = inApp && Webflow.env('design');
+    $body = $(document.body);
+
+    // Reset Lightbox
+    lightbox.destroy();
+
+    // Reset groups
+    groups = {};
+
+    // Find all instances on the page
+    $lightboxes = $doc.find(namespace);
+
+    // Instantiate all lighboxes
+    $lightboxes.webflowLightBox();
+  }
+
+  jQuery.fn.extend({
+    webflowLightBox: function() {
+      var $el = this;
+      $.each($el, function(i, el) {
+        // Store state in data
+        var data = $.data(el, namespace);
+        if (!data) data = $.data(el, namespace, {
+          el: $(el),
+          mode: 'images',
+          images: [],
+          embed: ''
+        });
+
+        // Remove old events
+        data.el.off(namespace);
+
+        // Set config from json script tag
+        configure(data);
+
+        // Add events based on mode
+        if (designer) {
+          data.el.on('setting' + namespace, configure.bind(null, data));
+        } else {
+          data.el
+            .on('tap' + namespace, tapHandler(data))
+            // Prevent page scrolling to top when clicking on lightbox triggers.
+            .on('click' + namespace, function (e) { e.preventDefault(); });
+        }
+      });
+    }
+  });
+
+  function configure(data) {
+    var json = data.el.children('.w-json').html();
+    var groupName, groupItems;
+
+    if (!json) {
+      data.items = [];
+      return;
+    }
+
+    try {
+      json = JSON.parse(json);
+
+      supportOldLightboxJson(json);
+
+      groupName = json.group;
+
+      if (groupName) {
+        groupItems = groups[groupName];
+        if (!groupItems) {
+          groupItems = groups[groupName] = [];
+        }
+
+        data.items = groupItems;
+
+        if (json.items.length) {
+          data.index = groupItems.length;
+          groupItems.push.apply(groupItems, json.items);
+        }
+      } else {
+        data.items = json.items;
+      }
+    }
+    catch (e) {
+      console.error('Malformed lightbox JSON configuration.', e.message);
+    }
+  }
+
+  function tapHandler(data) {
+    return function () {
+      data.items.length && lightbox(data.items, data.index || 0);
+    };
+  }
+
+  function supportOldLightboxJson(data) {
+    if (data.images) {
+      data.images.forEach(function (item) {
+        item.type = 'image';
+      });
+      data.items = data.images;
+    }
+
+    if (data.embed) {
+      data.embed.type = 'video';
+      data.items = [data.embed];
+    }
+
+    if (data.groupId) {
+      data.group = data.groupId;
+    }
+  }
 
   // Export module
   return api;
-});
+};
+
+},{"./webflow-lib":7}],9:[function(require,module,exports){
+'use strict';
+
 /**
- * ----------------------------------------------------------------------
+ * Webflow: Auto-select links to current page or section
+ */
+
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
+  var api = {};
+  var $win = $(window);
+  var designer;
+  var inApp = Webflow.env();
+  var location = window.location;
+  var tempLink = document.createElement('a');
+  var linkCurrent = 'w--current';
+  var validHash = /^#[a-zA-Z][\w:.-]*$/;
+  var indexPage = /index\.(html|php)$/;
+  var dirList = /\/$/;
+  var anchors;
+  var slug;
+
+  // -----------------------------------
+  // Module methods
+
+  api.ready = api.design = api.preview = init;
+
+  // -----------------------------------
+  // Private methods
+
+  function init() {
+    designer = inApp && Webflow.env('design');
+    slug = Webflow.env('slug') || location.pathname || '';
+
+    // Reset scroll listener, init anchors
+    Webflow.scroll.off(scroll);
+    anchors = [];
+
+    // Test all links for a selectable href
+    var links = document.links;
+    for (var i = 0; i < links.length; ++i) {
+      select(links[i]);
+    }
+
+    // Listen for scroll if any anchors exist
+    if (anchors.length) {
+      Webflow.scroll.on(scroll);
+      scroll();
+    }
+  }
+
+  function select(link) {
+    var href = (designer && link.getAttribute('href-disabled')) || link.getAttribute('href');
+    tempLink.href = href;
+
+    // Ignore any hrefs with a colon to safely avoid all uri schemes
+    if (href.indexOf(':') >= 0) return;
+
+    var $link = $(link);
+
+    // Check for valid hash links w/ sections and use scroll anchor
+    if (href.indexOf('#') === 0 && validHash.test(href)) {
+      var $section = $(href);
+      $section.length && anchors.push({ link: $link, sec: $section, active: false });
+      return;
+    }
+
+    // Ignore empty # links
+    if (href === '#') return;
+
+    // Determine whether the link should be selected
+    var match = (tempLink.href === location.href) || (href === slug) || (indexPage.test(href) && dirList.test(slug));
+    setClass($link, linkCurrent, match);
+  }
+
+  function scroll() {
+    var viewTop = $win.scrollTop();
+    var viewHeight = $win.height();
+
+    // Check each anchor for a section in view
+    _.each(anchors, function(anchor) {
+      var $link = anchor.link;
+      var $section = anchor.sec;
+      var top = $section.offset().top;
+      var height = $section.outerHeight();
+      var offset = viewHeight * 0.5;
+      var active = ($section.is(':visible') &&
+        top + height - offset >= viewTop &&
+        top + offset <= viewTop + viewHeight);
+      if (anchor.active === active) return;
+      anchor.active = active;
+      setClass($link, linkCurrent, active);
+      if (designer) $link[0].__wf_current = active;
+    });
+  }
+
+  function setClass($elem, className, add) {
+    var exists = $elem.hasClass(className);
+    if (add && exists) return;
+    if (!add && !exists) return;
+    add ? $elem.addClass(className) : $elem.removeClass(className);
+  }
+
+  // Export module
+  return api;
+};
+
+},{"./webflow-lib":7}],10:[function(require,module,exports){
+'use strict';
+
+/**
  * Webflow: Maps widget
  */
-Webflow.define('maps', function ($, _) {
-  'use strict';
 
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
   var api = {};
   var $doc = $(document);
-  var google;
+  var google = null;
   var $maps;
   var namespace = '.w-widget-map';
 
   // -----------------------------------
   // Module methods
 
-  api.ready = function () {
+  api.ready = function() {
     // Init Maps on the front-end
     if (!Webflow.env()) initMaps();
   };
 
-  api.preview = function () {
+  api.preview = function() {
     // Update active map nodes
     $maps = $doc.find(namespace);
     // Listen for resize events
@@ -1293,7 +2135,7 @@ Webflow.define('maps', function ($, _) {
     }
   };
 
-  api.design = function (evt) {
+  api.design = function(evt) {
     // Update active map nodes
     $maps = $doc.find(namespace);
     // Stop listening for resize events
@@ -1301,6 +2143,8 @@ Webflow.define('maps', function ($, _) {
     // Redraw to account for page changes
     $maps.length && _.defer(triggerRedraw);
   };
+
+  api.destroy = removeListeners;
 
   // -----------------------------------
   // Private methods
@@ -1314,16 +2158,32 @@ Webflow.define('maps', function ($, _) {
 
   function initMaps() {
     $maps = $doc.find(namespace);
-    if ($maps.length) {
-      Webflow.script('https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&callback=_wf_maps_loaded');
-      window._wf_maps_loaded = function () {
-        window._wf_maps_loaded = function () {};
-        google = window.google;
-        $maps.each(renderMap);
-        Webflow.resize.on(resizeMaps);
-        Webflow.redraw.on(resizeMaps);
-      };
+    if (!$maps.length) return;
+
+    if (google === null) {
+      $.getScript('https://maps.googleapis.com/maps/api/js?v=3.exp&sensor=false&callback=_wf_maps_loaded');
+      window._wf_maps_loaded = mapsLoaded;
+    } else {
+      mapsLoaded();
     }
+
+    function mapsLoaded() {
+      window._wf_maps_loaded = function() {};
+      google = window.google;
+      $maps.each(renderMap);
+      removeListeners();
+      addListeners();
+    }
+  }
+
+  function removeListeners() {
+    Webflow.resize.off(resizeMaps);
+    Webflow.redraw.off(resizeMaps);
+  }
+
+  function addListeners() {
+    Webflow.resize.on(resizeMaps);
+    Webflow.redraw.on(resizeMaps);
   }
 
   // Render map onto each element
@@ -1398,7 +2258,7 @@ Webflow.define('maps', function ($, _) {
     state.marker.setMap(state.map);
 
     // Set map position and offset
-    state.setMapPosition = function () {
+    state.setMapPosition = function() {
       state.map.setCenter(state.latLngObj);
       var offsetX = 0;
       var offsetY = 0;
@@ -1414,7 +2274,7 @@ Webflow.define('maps', function ($, _) {
     };
 
     // Fix position after first tiles have loaded
-    google.maps.event.addListener(state.map, 'tilesloaded', function () {
+    google.maps.event.addListener(state.map, 'tilesloaded', function() {
       google.maps.event.clearListeners(state.map, 'tilesloaded');
       state.setMapPosition();
     });
@@ -1458,40 +2318,372 @@ Webflow.define('maps', function ($, _) {
 
   // Export module
   return api;
-});
+};
+
+},{"./webflow-lib":7}],11:[function(require,module,exports){
+'use strict';
+
 /**
- * ----------------------------------------------------------------------
- * Webflow: Google+ widget
+ * Webflow: Navbar component
  */
-Webflow.define('gplus', function ($) {
-  'use strict';
 
-  var $doc = $(document);
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
   var api = {};
+  var tram = $.tram;
+  var $win = $(window);
+  var $doc = $(document);
+  var $body;
+  var $navbars;
+  var designer;
+  var inApp = Webflow.env();
+  var overlay = '<div class="w-nav-overlay" data-wf-ignore />';
+  var namespace = '.w-nav';
+  var buttonOpen = 'w--open';
+  var menuOpen = 'w--nav-menu-open';
+  var linkOpen = 'w--nav-link-open';
+  var ix = Webflow.ixEvents();
 
-  api.ready = function () {
-    // Load Google+ API on the front-end
-    if (!Webflow.env()) init();
-  };
+  // -----------------------------------
+  // Module methods
+
+  api.ready = api.design = api.preview = init;
+  api.destroy = removeListeners;
+
+  // -----------------------------------
+  // Private methods
 
   function init() {
-    $doc.find('.w-widget-gplus').length && Webflow.script('https://apis.google.com/js/plusone.js');
+    designer = inApp && Webflow.env('design');
+    $body = $(document.body);
+
+    // Find all instances on the page
+    $navbars = $doc.find(namespace);
+    if (!$navbars.length) return;
+    $navbars.each(build);
+
+    // Wire events
+    removeListeners();
+    addListeners();
+  }
+
+  function removeListeners() {
+    Webflow.resize.off(resizeAll);
+  }
+
+  function addListeners() {
+    Webflow.resize.on(resizeAll);
+  }
+
+  function resizeAll() {
+    $navbars.each(resize);
+  }
+
+  function build(i, el) {
+    var $el = $(el);
+
+    // Store state in data
+    var data = $.data(el, namespace);
+    if (!data) data = $.data(el, namespace, { open: false, el: $el, config: {} });
+    data.menu = $el.find('.w-nav-menu');
+    data.links = data.menu.find('.w-nav-link');
+    data.dropdowns = data.menu.find('.w-dropdown');
+    data.button = $el.find('.w-nav-button');
+    data.container = $el.find('.w-container');
+    data.outside = outside(data);
+
+    // Remove old events
+    data.el.off(namespace);
+    data.button.off(namespace);
+    data.menu.off(namespace);
+
+    // Set config from data attributes
+    configure(data);
+
+    // Add events based on mode
+    if (designer) {
+      removeOverlay(data);
+      data.el.on('setting' + namespace, handler(data));
+    } else {
+      addOverlay(data);
+      data.button.on('tap' + namespace, toggle(data));
+      data.menu.on('click' + namespace, 'a', navigate(data));
+    }
+
+    // Trigger initial resize
+    resize(i, el);
+  }
+
+  function removeOverlay(data) {
+    if (!data.overlay) return;
+    close(data, true);
+    data.overlay.remove();
+    data.overlay = null;
+  }
+
+  function addOverlay(data) {
+    if (data.overlay) return;
+    data.overlay = $(overlay).appendTo(data.el);
+    data.parent = data.menu.parent();
+    close(data, true);
+  }
+
+  function configure(data) {
+    var config = {};
+    var old = data.config || {};
+
+    // Set config options from data attributes
+    var animation = config.animation = data.el.attr('data-animation') || 'default';
+    config.animOver = /^over/.test(animation);
+    config.animDirect = /left$/.test(animation) ? -1 : 1;
+
+    // Re-open menu if the animation type changed
+    if (old.animation != animation) {
+      data.open && _.defer(reopen, data);
+    }
+
+    config.easing = data.el.attr('data-easing') || 'ease';
+    config.easing2 = data.el.attr('data-easing2') || 'ease';
+
+    var duration = data.el.attr('data-duration');
+    config.duration = duration != null ? +duration : 400;
+
+    config.docHeight = data.el.attr('data-doc-height');
+
+    // Store config in data
+    data.config = config;
+  }
+
+  function handler(data) {
+    return function(evt, options) {
+      options = options || {};
+      var winWidth = $win.width();
+      configure(data);
+      options.open === true && open(data, true);
+      options.open === false && close(data, true);
+      // Reopen if media query changed after setting
+      data.open && _.defer(function() {
+        if (winWidth != $win.width()) reopen(data);
+      });
+    };
+  }
+
+  function reopen(data) {
+    if (!data.open) return;
+    close(data, true);
+    open(data, true);
+  }
+
+  function toggle(data) {
+    // Debounce toggle to wait for accurate open state
+    return _.debounce(function(evt) {
+      data.open ? close(data) : open(data);
+    });
+  }
+
+  function navigate(data) {
+    return function(evt) {
+      var link = $(this);
+      var href = link.attr('href');
+
+      // Avoid late clicks on touch devices
+      if (!Webflow.validClick(evt.currentTarget)) {
+        evt.preventDefault();
+        return;
+      }
+
+      // Close when navigating to an in-page anchor
+      if (href && href.indexOf('#') === 0 && data.open) {
+        close(data);
+      }
+    };
+  }
+
+  function outside(data) {
+    // Unbind previous tap handler if it exists
+    if (data.outside) $doc.off('tap' + namespace, data.outside);
+
+    // Close menu when tapped outside, debounced to wait for state
+    return _.debounce(function(evt) {
+      if (!data.open) return;
+      var menu = $(evt.target).closest('.w-nav-menu');
+      if (!data.menu.is(menu)) {
+        close(data);
+      }
+    });
+  }
+
+  function resize(i, el) {
+    var data = $.data(el, namespace);
+    // Check for collapsed state based on button display
+    var collapsed = data.collapsed = data.button.css('display') != 'none';
+    // Close menu if button is no longer visible (and not in designer)
+    if (data.open && !collapsed && !designer) close(data, true);
+    // Set max-width of links + dropdowns to match container
+    if (data.container.length) {
+      var updateEachMax = updateMax(data);
+      data.links.each(updateEachMax);
+      data.dropdowns.each(updateEachMax);
+    }
+    // If currently open, update height to match body
+    if (data.open) {
+      setOverlayHeight(data);
+    }
+  }
+
+  var maxWidth = 'max-width';
+  function updateMax(data) {
+    // Set max-width of each element to match container
+    var containMax = data.container.css(maxWidth);
+    if (containMax == 'none') containMax = '';
+    return function(i, link) {
+      link = $(link);
+      link.css(maxWidth, '');
+      // Don't set the max-width if an upstream value exists
+      if (link.css(maxWidth) == 'none') link.css(maxWidth, containMax);
+    };
+  }
+
+  function open(data, immediate) {
+    if (data.open) return;
+    data.open = true;
+    data.menu.addClass(menuOpen);
+    data.links.addClass(linkOpen);
+    data.button.addClass(buttonOpen);
+    var config = data.config;
+    var animation = config.animation;
+    if (animation == 'none' || !tram.support.transform) immediate = true;
+    var bodyHeight = setOverlayHeight(data);
+    var menuHeight = data.menu.outerHeight(true);
+    var menuWidth = data.menu.outerWidth(true);
+    var navHeight = data.el.height();
+    var navbarEl = data.el[0];
+    resize(0, navbarEl);
+    ix.intro(0, navbarEl);
+    Webflow.redraw.up();
+
+    // Listen for tap outside events
+    if (!designer) $doc.on('tap' + namespace, data.outside);
+
+    // No transition for immediate
+    if (immediate) return;
+
+    var transConfig = 'transform ' + config.duration + 'ms ' + config.easing;
+
+    // Add menu to overlay
+    if (data.overlay) {
+      data.overlay.show().append(data.menu);
+    }
+
+    // Over left/right
+    if (config.animOver) {
+      tram(data.menu)
+        .add(transConfig)
+        .set({ x: config.animDirect * menuWidth, height: bodyHeight }).start({ x: 0 });
+        data.overlay && data.overlay.width(menuWidth);
+      return;
+    }
+
+    // Drop Down
+    var offsetY = navHeight + menuHeight;
+    tram(data.menu)
+      .add(transConfig)
+      .set({ y: -offsetY }).start({ y: 0 });
+  }
+
+  function setOverlayHeight(data) {
+    var config = data.config;
+    var bodyHeight = config.docHeight ? $doc.height() : $body.height();
+    if (config.animOver) {
+      data.menu.height(bodyHeight);
+    } else if (data.el.css('position') != 'fixed') {
+      bodyHeight -= data.el.height();
+    }
+    data.overlay && data.overlay.height(bodyHeight);
+    return bodyHeight;
+  }
+
+  function close(data, immediate) {
+    if (!data.open) return;
+    data.open = false;
+    data.button.removeClass(buttonOpen);
+    var config = data.config;
+    if (config.animation == 'none' || !tram.support.transform) immediate = true;
+    var animation = config.animation;
+    ix.outro(0, data.el[0]);
+
+    // Stop listening for tap outside events
+    $doc.off('tap' + namespace, data.outside);
+
+    if (immediate) {
+      tram(data.menu).stop();
+      complete();
+      return;
+    }
+
+    var transConfig = 'transform ' + config.duration + 'ms ' + config.easing2;
+    var menuHeight = data.menu.outerHeight(true);
+    var menuWidth = data.menu.outerWidth(true);
+    var navHeight = data.el.height();
+
+    // Over left/right
+    if (config.animOver) {
+      tram(data.menu)
+        .add(transConfig)
+        .start({ x: menuWidth * config.animDirect }).then(complete);
+      return;
+    }
+
+    // Drop Down
+    var offsetY = navHeight + menuHeight;
+    tram(data.menu)
+      .add(transConfig)
+      .start({ y: -offsetY }).then(complete);
+
+    function complete() {
+      data.menu.height('');
+      tram(data.menu).set({ x: 0, y: 0 });
+      data.menu.removeClass(menuOpen);
+      data.links.removeClass(linkOpen);
+      if (data.overlay && data.overlay.children().length) {
+        // Move menu back to parent
+        data.menu.appendTo(data.parent);
+        data.overlay.attr('style', '').hide();
+      }
+
+      // Trigger event so other components can hook in (dropdown)
+      data.el.triggerHandler('w-close');
+    }
   }
 
   // Export module
   return api;
-});
+};
+
+},{"./webflow-lib":7}],12:[function(require,module,exports){
+'use strict';
+
 /**
- * ----------------------------------------------------------------------
  * Webflow: Smooth scroll
  */
-Webflow.define('scroll', function ($) {
-  'use strict';
 
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
   var $doc = $(document);
   var win = window;
   var loc = win.location;
+  var history = inIframe() ? null : win.history;
   var validHash = /^[a-zA-Z][\w:.-]*$/;
+
+  function inIframe() {
+    try {
+      return !!win.frameElement;
+    } catch (e) {
+      return true;
+    }
+  }
 
   function ready() {
     // If hash is already present on page load, scroll to it right away
@@ -1507,6 +2699,12 @@ Webflow.define('scroll', function ($) {
 
       // Ignore links being used by jQuery mobile
       if (window.$.mobile && $(e.currentTarget).hasClass('ui-link')) return;
+
+      // Ignore empty # links
+      if (this.getAttribute('href') === '#') {
+        e.preventDefault();
+        return;
+      }
 
       var hash = this.hash ? this.hash.substring(1) : null;
       if (hash) {
@@ -1529,12 +2727,15 @@ Webflow.define('scroll', function ($) {
     }
 
     // Push new history state
-    if (loc.hash !== hash && win.history && win.history.pushState) {
-      win.history.pushState(null, null, '#' + hash);
+    if (loc.hash !== hash && history && history.pushState) {
+      var oldHash = history.state && history.state.hash;
+      if (oldHash !== hash) {
+        history.pushState({ hash: hash }, '', '#' + hash);
+      }
     }
 
     // If a fixed header exists, offset for the height
-    var header = $('header, body > .header, body > .w-nav');
+    var header = $('header, body > .header, body > .w-nav:not([data-no-scroll])');
     var offset = header.css('position') === 'fixed' ? header.outerHeight() : 0;
 
     win.setTimeout(function() {
@@ -1600,146 +2801,53 @@ Webflow.define('scroll', function ($) {
 
   // Export module
   return { ready: ready };
-});
+};
+
+},{"./webflow-lib":7}],13:[function(require,module,exports){
+'use strict';
+
 /**
- * ----------------------------------------------------------------------
- * Webflow: Auto-select links to current page or section
- */
-Webflow.define('links', function ($, _) {
-  'use strict';
-
-  var api = {};
-  var $win = $(window);
-  var designer;
-  var inApp = Webflow.env();
-  var location = window.location;
-  var linkCurrent = 'w--current';
-  var validHash = /^#[a-zA-Z][\w:.-]*$/;
-  var indexPage = /index\.(html|php)$/;
-  var dirList = /\/$/;
-  var anchors;
-
-  // -----------------------------------
-  // Module methods
-
-  api.ready = api.design = api.preview = init;
-
-  // -----------------------------------
-  // Private methods
-
-  function init() {
-    designer = inApp && Webflow.env('design');
-
-    // Reset scroll listener, init anchors
-    Webflow.scroll.off(scroll);
-    anchors = [];
-
-    // Test all links for a selectable href
-    var links = document.links;
-    for (var i = 0; i < links.length; ++i) {
-      select(links[i]);
-    }
-
-    // Listen for scroll if any anchors exist
-    if (anchors.length) {
-      Webflow.scroll.on(scroll);
-      scroll();
-    }
-  }
-
-  function select(link) {
-    var href = link.getAttribute('href');
-
-    // Ignore any hrefs with a colon to safely avoid all uri schemes
-    if (href.indexOf(':') >= 0) return;
-
-    var $link = $(link);
-
-    // Check for valid hash links w/ sections and use scroll anchor
-    if (href.indexOf('#') === 0 && validHash.test(href)) {
-      var $section = $(href);
-      $section.length && anchors.push({ link: $link, sec: $section, active: false });
-      return;
-    }
-
-    // Determine whether the link should be selected
-    var slug = (inApp ? Webflow.env('slug') : location.pathname) || '';
-    var match = (link.href === location.href) || (href === slug) || (indexPage.test(href) && dirList.test(slug));
-    setClass($link, linkCurrent, match);
-  }
-
-  function scroll() {
-    var viewTop = $win.scrollTop();
-    var viewHeight = $win.height();
-
-    // Check each anchor for a section in view
-    _.each(anchors, function (anchor) {
-      var $link = anchor.link;
-      var $section = anchor.sec;
-      var top = $section.offset().top;
-      var height = $section.outerHeight();
-      var offset = viewHeight * 0.5;
-      var active = ($section.is(':visible') &&
-        top + height - offset >= viewTop &&
-        top + offset <= viewTop + viewHeight);
-      if (anchor.active === active) return;
-      anchor.active = active;
-      setClass($link, linkCurrent, active);
-      if (designer) $link[0].__wf_current = active;
-    });
-  }
-
-  function setClass($elem, className, add) {
-    var exists = $elem.hasClass(className);
-    if (add && exists) return;
-    if (!add && !exists) return;
-    add ? $elem.addClass(className) : $elem.removeClass(className);
-  }
-
-  // Export module
-  return api;
-});
-/**
- * ----------------------------------------------------------------------
  * Webflow: Slider component
  */
-Webflow.define('slider', function ($, _) {
-  'use strict';
 
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
   var api = {};
-  var tram = window.tram;
+  var tram = $.tram;
   var $doc = $(document);
   var $sliders;
   var designer;
   var inApp = Webflow.env();
   var namespace = '.w-slider';
   var dot = '<div class="w-slider-dot" data-wf-ignore />';
-  var ix = Webflow.require('ix');
-  ix = ix && ix.events;
+  var ix = Webflow.ixEvents();
   var fallback;
   var redraw;
 
   // -----------------------------------
   // Module methods
 
-  api.ready = function () {
+  api.ready = function() {
     init();
   };
 
-  api.design = function () {
+  api.design = function() {
     designer = true;
     init();
   };
 
-  api.preview = function () {
+  api.preview = function() {
     designer = false;
     init();
   };
 
-  api.redraw = function () {
+  api.redraw = function() {
     redraw = true;
     init();
   };
+
+  api.destroy = removeListeners;
 
   // -----------------------------------
   // Private methods
@@ -1747,21 +2855,28 @@ Webflow.define('slider', function ($, _) {
   function init() {
     // Find all sliders on the page
     $sliders = $doc.find(namespace);
-    $sliders.each(build);
+    if (!$sliders.length) return;
+    $sliders.filter(':visible').each(build);
     redraw = null;
     if (fallback) return;
 
     // Wire events
-    listen && listen();
-    listen = null;
+    removeListeners();
+    addListeners();
   }
 
-  function listen() {
-    Webflow.resize.on(function () {
-      $sliders.each(render);
-    });
+  function removeListeners() {
+    Webflow.resize.off(renderAll);
+    Webflow.redraw.off(api.redraw);
+  }
 
+  function addListeners() {
+    Webflow.resize.on(renderAll);
     Webflow.redraw.on(api.redraw);
+  }
+
+  function renderAll() {
+    $sliders.filter(':visible').each(render);
   }
 
   function build(i, el) {
@@ -1769,13 +2884,18 @@ Webflow.define('slider', function ($, _) {
 
     // Store slider state in data
     var data = $.data(el, namespace);
-    if (!data) data = $.data(el, namespace, { index: 0, el: $el, config: {} });
+    if (!data) data = $.data(el, namespace, {
+      index: 0,
+      depth: 1,
+      el: $el,
+      config: {}
+    });
     data.mask = $el.children('.w-slider-mask');
     data.left = $el.children('.w-slider-arrow-left');
     data.right = $el.children('.w-slider-arrow-right');
     data.nav = $el.children('.w-slider-nav');
     data.slides = data.mask.children('.w-slide');
-    if (ix) data.slides.each(ix.reset);
+    data.slides.each(ix.reset);
     if (redraw) data.maskWidth = 0;
 
     // Disable in old browsers
@@ -1799,7 +2919,7 @@ Webflow.define('slider', function ($, _) {
     // Add events based on mode
     if (designer) {
       data.el.on('setting' + namespace, handler(data));
-      killTimer(data);
+      stopTimer(data);
       data.hasTimer = false;
     } else {
       data.el.on('swipe' + namespace, handler(data));
@@ -1809,6 +2929,7 @@ Webflow.define('slider', function ($, _) {
       // Start timer if autoplay is true, only once
       if (data.config.autoplay && !data.hasTimer) {
         data.hasTimer = true;
+        data.timerCount = 1;
         startTimer(data);
       }
     }
@@ -1830,7 +2951,6 @@ Webflow.define('slider', function ($, _) {
   function configure(data) {
     var config = {};
 
-    config.depth = 1;
     config.crossOver = 0;
 
     // Set config options from data attributes
@@ -1856,10 +2976,11 @@ Webflow.define('slider', function ($, _) {
     if (+data.el.attr('data-autoplay')) {
       config.autoplay = true;
       config.delay = +data.el.attr('data-delay') || 2000;
+      config.timerMax = +data.el.attr('data-autoplay-limit');
       // Disable timer on first touch or mouse down
       var touchEvents = 'mousedown' + namespace + ' touchstart' + namespace;
-      if (!designer) data.el.off(touchEvents).one(touchEvents, function () {
-        killTimer(data);
+      if (!designer) data.el.off(touchEvents).one(touchEvents, function() {
+        stopTimer(data);
       });
     }
 
@@ -1872,13 +2993,13 @@ Webflow.define('slider', function ($, _) {
   }
 
   function previous(data) {
-    return function (evt) {
+    return function(evt) {
       change(data, { index: data.index - 1, vector: -1 });
     };
   }
 
   function next(data) {
-    return function (evt) {
+    return function(evt) {
       change(data, { index: data.index + 1, vector: 1 });
     };
   }
@@ -1889,8 +3010,8 @@ Webflow.define('slider', function ($, _) {
     if (value === data.slides.length) {
       init(); layout(data); // Rebuild and find new slides
     }
-    _.each(data.anchors, function (anchor, index) {
-      $(anchor.els).each(function (i, el) {
+    _.each(data.anchors, function(anchor, index) {
+      $(anchor.els).each(function(i, el) {
         if ($(el).index() === value) found = index;
       });
     });
@@ -1898,29 +3019,24 @@ Webflow.define('slider', function ($, _) {
   }
 
   function startTimer(data) {
-    var config = data.config;
     stopTimer(data);
-    config.timer = window.setTimeout(function () {
-      if (!config.autoplay || designer) return;
+    var config = data.config;
+    var timerMax = config.timerMax;
+    if (timerMax && data.timerCount++ > timerMax) return;
+    data.timerId = window.setTimeout(function() {
+      if (data.timerId == null || designer) return;
       next(data)();
       startTimer(data);
     }, config.delay);
   }
 
   function stopTimer(data) {
-    var config = data.config;
-    window.clearTimeout(config.timer);
-    config.timer = null;
-  }
-
-  function killTimer(data) {
-    var config = data.config;
-    config.autoplay = false;
-    stopTimer(data);
+    window.clearTimeout(data.timerId);
+    data.timerId = null;
   }
 
   function handler(data) {
-    return function (evt, options) {
+    return function(evt, options) {
       options = options || {};
 
       // Designer settings
@@ -1936,6 +3052,7 @@ Webflow.define('slider', function ($, _) {
 
       // Swipe event
       if (evt.type == 'swipe') {
+        if (Webflow.env('editor')) return;
         if (options.direction == 'left') return next(data)();
         if (options.direction == 'right') return previous(data)();
         return;
@@ -2003,7 +3120,7 @@ Webflow.define('slider', function ($, _) {
     var slideRule = 'transform ' + duration + 'ms ' + easing;
 
     // Trigger IX events
-    if (!designer && ix) {
+    if (!designer) {
       targets.each(ix.intro);
       others.each(ix.outro);
     }
@@ -2028,7 +3145,7 @@ Webflow.define('slider', function ($, _) {
         .add(fadeRule)
         .start({ opacity: 0 });
       tram(targets)
-        .set({ visibility: '', x: offsetX, opacity: 0, zIndex: config.depth++ })
+        .set({ visibility: '', x: offsetX, opacity: 0, zIndex: data.depth++ })
         .add(fadeRule)
         .wait(wait)
         .then({ opacity: 1 })
@@ -2042,7 +3159,7 @@ Webflow.define('slider', function ($, _) {
         .set({ visibility: '' })
         .stop();
       tram(targets)
-        .set({ visibility: '', x: offsetX, opacity: 0, zIndex: config.depth++ })
+        .set({ visibility: '', x: offsetX, opacity: 0, zIndex: data.depth++ })
         .add(fadeRule)
         .start({ opacity: 1 })
         .then(resetOthers);
@@ -2056,7 +3173,7 @@ Webflow.define('slider', function ($, _) {
         .set({ visibility: '' })
         .stop();
       tram(targets)
-        .set({ visibility: '', zIndex: config.depth++, x: offsetX + anchors[data.index].width * vector })
+        .set({ visibility: '', zIndex: data.depth++, x: offsetX + anchors[data.index].width * vector })
         .add(slideRule)
         .start({ x: offsetX })
         .then(resetOthers);
@@ -2109,11 +3226,14 @@ Webflow.define('slider', function ($, _) {
     var offset = 0;
     var anchor = 0;
     var width = 0;
+    var maskWidth = data.maskWidth;
+    var threshold = maskWidth - data.config.edge;
+    if (threshold < 0) threshold = 0;
     data.anchors = [{ els: [], x: 0, width: 0 }];
-    data.slides.each(function (i, el) {
-      if (anchor - offset > data.maskWidth - data.config.edge) {
+    data.slides.each(function(i, el) {
+      if (anchor - offset > threshold) {
         pages++;
-        offset += data.maskWidth;
+        offset += maskWidth;
         // Store page anchor for transition
         data.anchors[pages-1] = { els: [], x: anchor, width: 0 };
       }
@@ -2166,7 +3286,7 @@ Webflow.define('slider', function ($, _) {
 
   function slidesChanged(data) {
     var slidesWidth = 0;
-    data.slides.each(function (i, el) {
+    data.slides.each(function(i, el) {
       slidesWidth += $(el).outerWidth(true);
     });
     if (data.slidesWidth !== slidesWidth) {
@@ -2178,339 +3298,20 @@ Webflow.define('slider', function ($, _) {
 
   // Export module
   return api;
-});
+};
+
+},{"./webflow-lib":7}],14:[function(require,module,exports){
+'use strict';
+
 /**
- * ----------------------------------------------------------------------
- * Webflow: Navbar component
- */
-Webflow.define('navbar', function ($, _) {
-  'use strict';
-
-  var api = {};
-  var tram = window.tram;
-  var $win = $(window);
-  var $doc = $(document);
-  var $body;
-  var $navbars;
-  var designer;
-  var inApp = Webflow.env();
-  var overlay = '<div class="w-nav-overlay" data-wf-ignore />';
-  var namespace = '.w-nav';
-  var buttonOpen = 'w--open';
-  var menuOpen = 'w--nav-menu-open';
-  var linkOpen = 'w--nav-link-open';
-
-  // -----------------------------------
-  // Module methods
-
-  api.ready = api.design = api.preview = init;
-
-  // -----------------------------------
-  // Private methods
-
-  function init() {
-    designer = inApp && Webflow.env('design');
-    $body = $(document.body);
-
-    // Find all instances on the page
-    $navbars = $doc.find(namespace);
-    $navbars.each(build);
-
-    // Wire events
-    listen && listen();
-    listen = null;
-  }
-
-  function listen() {
-    Webflow.resize.on(function () {
-      $navbars.each(resize);
-    });
-  }
-
-  function build(i, el) {
-    var $el = $(el);
-
-    // Store state in data
-    var data = $.data(el, namespace);
-    if (!data) data = $.data(el, namespace, { open: false, el: $el, config: {} });
-    data.menu = $el.find('.w-nav-menu');
-    data.links = data.menu.find('.w-nav-link');
-    data.button = $el.find('.w-nav-button');
-    data.container = $el.find('.w-container');
-    data.outside = outside(data);
-
-    // Remove old events
-    data.el.off(namespace);
-    data.button.off(namespace);
-    data.menu.off(namespace);
-
-    // Set config from data attributes
-    configure(data);
-
-    // Add events based on mode
-    if (designer) {
-      removeOverlay(data);
-      data.el.on('setting' + namespace, handler(data));
-    } else {
-      addOverlay(data);
-      data.button.on('tap' + namespace, toggle(data));
-      data.menu.on('tap' + namespace, 'a', navigate(data));
-    }
-
-    // Trigger initial resize
-    resize(i, el);
-  }
-
-  function removeOverlay(data) {
-    if (!data.overlay) return;
-    close(data, true);
-    data.overlay.remove();
-    data.overlay = null;
-  }
-
-  function addOverlay(data) {
-    if (data.overlay) return;
-    data.overlay = $(overlay).appendTo(data.el);
-    data.parent = data.menu.parent();
-    close(data, true);
-  }
-
-  function configure(data) {
-    var config = {};
-    var old = data.config || {};
-
-    // Set config options from data attributes
-    config.animation = data.el.attr('data-animation') || 'default';
-
-    // Re-open menu if the animation type changed
-    if (old.animation != config.animation) {
-      data.open && _.defer(reopen, data);
-    }
-
-    config.easing = data.el.attr('data-easing') || 'ease';
-    config.easing2 = data.el.attr('data-easing2') || 'ease';
-
-    var duration = data.el.attr('data-duration');
-    config.duration = duration != null ? +duration : 400;
-
-    config.docHeight = data.el.attr('data-doc-height');
-
-    // Store config in data
-    data.config = config;
-  }
-
-  function handler(data) {
-    return function (evt, options) {
-      options = options || {};
-
-      // Designer settings
-      if (designer && evt.type == 'setting') {
-        var winWidth = $win.width();
-        configure(data);
-        options.open === true && open(data, true);
-        options.open === false && close(data, true);
-        // Reopen if media query changed after setting
-        data.open && _.defer(function () {
-          if (winWidth != $win.width()) reopen(data);
-        });
-        return;
-      }
-    };
-  }
-
-  function closeEach(i, el) {
-    var data = $.data(el, namespace);
-    data.open && close(data);
-  }
-
-  function reopen(data) {
-    if (!data.open) return;
-    close(data, true);
-    open(data, true);
-  }
-
-  function toggle(data) {
-    return _.debounce(function (evt) {
-      data.open ? close(data) : open(data);
-    });
-  }
-
-  function navigate(data) {
-    return function (evt) {
-      var link = $(this);
-      var href = link.attr('href');
-
-      // Close when navigating to an in-page anchor
-      if (href && href.indexOf('#') === 0 && data.open) {
-        // Avoid empty hash links
-        if (href.length === 1) evt.preventDefault();
-        close(data);
-      }
-    };
-  }
-
-  function outside(data) {
-    // Close menu when tapped outside
-    return _.debounce(function (evt) {
-      if (!data.open) return;
-      var menu = $(evt.target).closest('.w-nav-menu');
-      if (!data.menu.is(menu)) {
-        close(data);
-      }
-    });
-  }
-
-  function resize(i, el) {
-    var data = $.data(el, namespace);
-    // Check for collapsed state based on button display
-    var collapsed = data.collapsed = data.button.css('display') != 'none';
-    // Close menu if button is no longer visible (and not in designer)
-    if (data.open && !collapsed && !designer) close(data, true);
-    // Set max-width of links to match container
-    data.container.length && data.links.each(maxLink(data));
-    // If currently open and in overlay mode, update height to match body
-    if (data.open && /^over/.test(data.config.animation)) {
-      setBodyHeight(data);
-      setMenuHeight(data);
-    }
-  }
-
-  var maxWidth = 'max-width';
-  function maxLink(data) {
-    // Set max-width of each link (unless it has an upstream value)
-    var containMax = data.container.css(maxWidth);
-    if (containMax == 'none') containMax = '';
-    return function (i, link) {
-      link = $(link);
-      link.css(maxWidth, '');
-      if (link.css(maxWidth) == 'none') link.css(maxWidth, containMax);
-    };
-  }
-
-  function open(data, immediate) {
-    if (data.open) return;
-    data.open = true;
-    data.menu.addClass(menuOpen);
-    data.links.addClass(linkOpen);
-    data.button.addClass(buttonOpen);
-    var config = data.config;
-    var animation = config.animation;
-    if (animation == 'none' || !tram.support.transform) immediate = true;
-    var animOver = /^over/.test(animation);
-    var bodyHeight = setBodyHeight(data);
-    var menuHeight = data.menu.outerHeight(true);
-    var menuWidth = data.menu.outerWidth(true);
-    var navHeight = data.el.height();
-    var direction = /left$/.test(animation) ? -1 : 1;
-    resize(0, data.el[0]);
-
-    // Listen for tap outside events
-    if (!designer) $doc.on('tap' + namespace, data.outside);
-
-    // Update menu height for Over state
-    if (animOver) setMenuHeight(data);
-
-    // No transition for immediate
-    if (immediate) return;
-
-    var transConfig = 'transform ' + config.duration + 'ms ' + config.easing;
-
-    // Add menu to overlay
-    if (data.overlay) {
-      data.overlay.show()
-        .append(data.menu)
-        .height(menuHeight);
-    }
-
-    // Over left/right
-    if (animOver) {
-      tram(data.menu)
-        .add(transConfig)
-        .set({ x: direction * menuWidth, height: bodyHeight }).start({ x: 0 });
-      data.overlay && data.overlay.css({ width: menuWidth, height: bodyHeight });
-      return;
-    }
-
-    // Drop Down
-    var offsetY = navHeight + menuHeight;
-    tram(data.menu)
-      .add(transConfig)
-      .set({ y: -offsetY }).start({ y: 0 });
-  }
-
-  function setBodyHeight(data) {
-    return data.bodyHeight = data.config.docHeight ? $doc.height() : $body.height();
-  }
-
-  function setMenuHeight(data) {
-    var bodyHeight = data.bodyHeight;
-    var navFixed = data.el.css('position') == 'fixed';
-    if (!navFixed) bodyHeight -= data.el.offset().top;
-    data.menu.height(bodyHeight);
-  }
-
-  function close(data, immediate) {
-    data.open = false;
-    data.button.removeClass(buttonOpen);
-    var config = data.config;
-    if (config.animation == 'none' || !tram.support.transform) immediate = true;
-    var animation = config.animation;
-
-    // Stop listening for tap outside events
-    $doc.off('tap' + namespace, data.outside);
-
-    if (immediate) {
-      tram(data.menu).stop();
-      complete();
-      return;
-    }
-
-    var transConfig = 'transform ' + config.duration + 'ms ' + config.easing2;
-    var menuHeight = data.menu.outerHeight(true);
-    var menuWidth = data.menu.outerWidth(true);
-    var navHeight = data.el.height();
-    var direction = /left$/.test(animation) ? -1 : 1;
-    var animOver = /^over/.test(animation);
-
-    // Over left/right
-    if (animOver) {
-      tram(data.menu)
-        .add(transConfig)
-        .start({ x: menuWidth * direction }).then(complete);
-      return;
-    }
-
-    // Drop Down
-    var offsetY = navHeight + menuHeight;
-    tram(data.menu)
-      .add(transConfig)
-      .start({ y: -offsetY }).then(complete);
-
-    function complete() {
-      data.menu.height('');
-      tram(data.menu).set({ x: 0, y: 0 });
-      data.menu.removeClass(menuOpen);
-      data.links.removeClass(linkOpen);
-      if (data.overlay && data.overlay.children().length) {
-        // Move menu back to parent
-        data.menu.appendTo(data.parent);
-        data.overlay.attr('style', '').hide();
-      }
-    }
-  }
-
-  // Export module
-  return api;
-});
-/**
- * ----------------------------------------------------------------------
  * Webflow: Tabs component
  */
-Webflow.define('tabs', function ($, _) {
-  'use strict';
 
+var Webflow = require('./webflow-lib');
+
+module.exports = function($, _) {
   var api = {};
-  var tram = window.tram;
+  var tram = $.tram;
   var $win = $(window);
   var $doc = $(document);
   var $tabs;
@@ -2522,7 +3323,7 @@ Webflow.define('tabs', function ($, _) {
   var namespace = '.w-tabs';
   var linkCurrent = 'w--current';
   var tabActive = 'w--tab-active';
-  var ix = Webflow.require('ix').events;
+  var ix = Webflow.ixEvents();
 
   // -----------------------------------
   // Module methods
@@ -2537,6 +3338,7 @@ Webflow.define('tabs', function ($, _) {
 
     // Find all instances on the page
     $tabs = $doc.find(namespace);
+    if (!$tabs.length) return;
     $tabs.each(build);
   }
 
@@ -2590,7 +3392,7 @@ Webflow.define('tabs', function ($, _) {
   }
 
   function linkSelect(data) {
-    return function (evt) {
+    return function(evt) {
       var tab = evt.currentTarget.getAttribute(tabAttr);
       tab && changeTab(data, { tab: tab });
     };
@@ -2608,7 +3410,7 @@ Webflow.define('tabs', function ($, _) {
     data.current = tab;
 
     // Select the current link
-    data.links.each(function (i, el) {
+    data.links.each(function(i, el) {
       var $el = $(el);
       if (el.getAttribute(tabAttr) === tab) $el.addClass(linkCurrent).each(ix.intro);
       else if ($el.hasClass(linkCurrent)) $el.removeClass(linkCurrent).each(ix.outro);
@@ -2617,7 +3419,7 @@ Webflow.define('tabs', function ($, _) {
     // Find the new tab panes and keep track of previous
     var targets = [];
     var previous = [];
-    data.panes.each(function (i, el) {
+    data.panes.each(function(i, el) {
       var $el = $(el);
       if (el.getAttribute(tabAttr) === tab) {
         targets.push(el);
@@ -2672,4 +3474,516 @@ Webflow.define('tabs', function ($, _) {
 
   // Export module
   return api;
-});
+};
+
+},{"./webflow-lib":7}],15:[function(require,module,exports){
+'use strict';
+
+/**
+ * Webflow: Touch events
+ */
+
+module.exports = function($, _) {
+  var api = {};
+  var fallback = !document.addEventListener;
+  var getSelection = window.getSelection;
+
+  // Fallback to click events in old IE
+  if (fallback) {
+    $.event.special.tap = { bindType: 'click', delegateType: 'click' };
+  }
+
+  api.init = function(el) {
+    if (fallback) return null;
+    el = typeof el === 'string' ? $(el).get(0) : el;
+    return el ? new Touch(el) : null;
+  };
+
+  function Touch(el) {
+    var active = false;
+    var dirty = false;
+    var useTouch = false;
+    var thresholdX = Math.min(Math.round(window.innerWidth * 0.04), 40);
+    var startX, startY, lastX;
+
+    el.addEventListener('touchstart', start, false);
+    el.addEventListener('touchmove', move, false);
+    el.addEventListener('touchend', end, false);
+    el.addEventListener('touchcancel', cancel, false);
+    el.addEventListener('mousedown', start, false);
+    el.addEventListener('mousemove', move, false);
+    el.addEventListener('mouseup', end, false);
+    el.addEventListener('mouseout', cancel, false);
+
+    function start(evt) {
+      // We don’t handle multi-touch events yet.
+      var touches = evt.touches;
+      if (touches && touches.length > 1) {
+        return;
+      }
+
+      active = true;
+      dirty = false;
+
+      if (touches) {
+        useTouch = true;
+        startX = touches[0].clientX;
+        startY = touches[0].clientY;
+      } else {
+        startX = evt.clientX;
+        startY = evt.clientY;
+      }
+
+      lastX = startX;
+    }
+
+    function move(evt) {
+      if (!active) return;
+
+      if (useTouch && evt.type === 'mousemove') {
+        evt.preventDefault();
+        evt.stopPropagation();
+        return;
+      }
+
+      var touches = evt.touches;
+      var x = touches ? touches[0].clientX : evt.clientX;
+      var y = touches ? touches[0].clientY : evt.clientY;
+
+      var velocityX = x - lastX;
+      lastX = x;
+
+      // Allow swipes while pointer is down, but prevent them during text selection
+      if (Math.abs(velocityX) > thresholdX && getSelection && getSelection() + '' === '') {
+        triggerEvent('swipe', evt, { direction: velocityX > 0 ? 'right' : 'left' });
+        cancel();
+      }
+
+      // If pointer moves more than 10px flag to cancel tap
+      if (Math.abs(x - startX) > 10 || Math.abs(y - startY) > 10) {
+        dirty = true;
+      }
+    }
+
+    function end(evt) {
+      if (!active) return;
+      active = false;
+
+      if (useTouch && evt.type === 'mouseup') {
+        evt.preventDefault();
+        evt.stopPropagation();
+        useTouch = false;
+        return;
+      }
+
+      if (!dirty) triggerEvent('tap', evt);
+    }
+
+    function cancel(evt) {
+      active = false;
+    }
+
+    function destroy() {
+      el.removeEventListener('touchstart', start, false);
+      el.removeEventListener('touchmove', move, false);
+      el.removeEventListener('touchend', end, false);
+      el.removeEventListener('touchcancel', cancel, false);
+      el.removeEventListener('mousedown', start, false);
+      el.removeEventListener('mousemove', move, false);
+      el.removeEventListener('mouseup', end, false);
+      el.removeEventListener('mouseout', cancel, false);
+      el = null;
+    }
+
+    // Public instance methods
+    this.destroy = destroy;
+  }
+
+  // Wrap native event to supoprt preventdefault + stopPropagation
+  function triggerEvent(type, evt, data) {
+    var newEvent = $.Event(type, { originalEvent: evt });
+    $(evt.target).trigger(newEvent, data);
+  }
+
+  // Listen for touch events on all nodes by default.
+  api.instance = api.init(document);
+
+  // Export module
+  return api;
+};
+
+},{}],16:[function(require,module,exports){
+/*!
+ * tram.js v0.8.1-global
+ * Cross-browser CSS3 transitions in JavaScript
+ * https://github.com/bkwld/tram
+ * MIT License
+ */
+window.tram=function(a){function b(a,b){var c=new L.Bare;return c.init(a,b)}function c(a){return a.replace(/[A-Z]/g,function(a){return"-"+a.toLowerCase()})}function d(a){var b=parseInt(a.slice(1),16),c=b>>16&255,d=b>>8&255,e=255&b;return[c,d,e]}function e(a,b,c){return"#"+(1<<24|a<<16|b<<8|c).toString(16).slice(1)}function f(){}function g(a,b){_("Type warning: Expected: ["+a+"] Got: ["+typeof b+"] "+b)}function h(a,b,c){_("Units do not match ["+a+"]: "+b+", "+c)}function i(a,b,c){if(void 0!==b&&(c=b),void 0===a)return c;var d=c;return Z.test(a)||!$.test(a)?d=parseInt(a,10):$.test(a)&&(d=1e3*parseFloat(a)),0>d&&(d=0),d===d?d:c}function j(a){for(var b=-1,c=a?a.length:0,d=[];++b<c;){var e=a[b];e&&d.push(e)}return d}var k=function(a,b,c){function d(a){return"object"==typeof a}function e(a){return"function"==typeof a}function f(){}function g(h,i){function j(){var a=new k;return e(a.init)&&a.init.apply(a,arguments),a}function k(){}i===c&&(i=h,h=Object),j.Bare=k;var l,m=f[a]=h[a],n=k[a]=j[a]=new f;return n.constructor=j,j.mixin=function(b){return k[a]=j[a]=g(j,b)[a],j},j.open=function(a){if(l={},e(a)?l=a.call(j,n,m,j,h):d(a)&&(l=a),d(l))for(var c in l)b.call(l,c)&&(n[c]=l[c]);return e(n.init)||(n.init=h),j},j.open(i)}return g}("prototype",{}.hasOwnProperty),l={ease:["ease",function(a,b,c,d){var e=(a/=d)*a,f=e*a;return b+c*(-2.75*f*e+11*e*e+-15.5*f+8*e+.25*a)}],"ease-in":["ease-in",function(a,b,c,d){var e=(a/=d)*a,f=e*a;return b+c*(-1*f*e+3*e*e+-3*f+2*e)}],"ease-out":["ease-out",function(a,b,c,d){var e=(a/=d)*a,f=e*a;return b+c*(.3*f*e+-1.6*e*e+2.2*f+-1.8*e+1.9*a)}],"ease-in-out":["ease-in-out",function(a,b,c,d){var e=(a/=d)*a,f=e*a;return b+c*(2*f*e+-5*e*e+2*f+2*e)}],linear:["linear",function(a,b,c,d){return c*a/d+b}],"ease-in-quad":["cubic-bezier(0.550, 0.085, 0.680, 0.530)",function(a,b,c,d){return c*(a/=d)*a+b}],"ease-out-quad":["cubic-bezier(0.250, 0.460, 0.450, 0.940)",function(a,b,c,d){return-c*(a/=d)*(a-2)+b}],"ease-in-out-quad":["cubic-bezier(0.455, 0.030, 0.515, 0.955)",function(a,b,c,d){return(a/=d/2)<1?c/2*a*a+b:-c/2*(--a*(a-2)-1)+b}],"ease-in-cubic":["cubic-bezier(0.550, 0.055, 0.675, 0.190)",function(a,b,c,d){return c*(a/=d)*a*a+b}],"ease-out-cubic":["cubic-bezier(0.215, 0.610, 0.355, 1)",function(a,b,c,d){return c*((a=a/d-1)*a*a+1)+b}],"ease-in-out-cubic":["cubic-bezier(0.645, 0.045, 0.355, 1)",function(a,b,c,d){return(a/=d/2)<1?c/2*a*a*a+b:c/2*((a-=2)*a*a+2)+b}],"ease-in-quart":["cubic-bezier(0.895, 0.030, 0.685, 0.220)",function(a,b,c,d){return c*(a/=d)*a*a*a+b}],"ease-out-quart":["cubic-bezier(0.165, 0.840, 0.440, 1)",function(a,b,c,d){return-c*((a=a/d-1)*a*a*a-1)+b}],"ease-in-out-quart":["cubic-bezier(0.770, 0, 0.175, 1)",function(a,b,c,d){return(a/=d/2)<1?c/2*a*a*a*a+b:-c/2*((a-=2)*a*a*a-2)+b}],"ease-in-quint":["cubic-bezier(0.755, 0.050, 0.855, 0.060)",function(a,b,c,d){return c*(a/=d)*a*a*a*a+b}],"ease-out-quint":["cubic-bezier(0.230, 1, 0.320, 1)",function(a,b,c,d){return c*((a=a/d-1)*a*a*a*a+1)+b}],"ease-in-out-quint":["cubic-bezier(0.860, 0, 0.070, 1)",function(a,b,c,d){return(a/=d/2)<1?c/2*a*a*a*a*a+b:c/2*((a-=2)*a*a*a*a+2)+b}],"ease-in-sine":["cubic-bezier(0.470, 0, 0.745, 0.715)",function(a,b,c,d){return-c*Math.cos(a/d*(Math.PI/2))+c+b}],"ease-out-sine":["cubic-bezier(0.390, 0.575, 0.565, 1)",function(a,b,c,d){return c*Math.sin(a/d*(Math.PI/2))+b}],"ease-in-out-sine":["cubic-bezier(0.445, 0.050, 0.550, 0.950)",function(a,b,c,d){return-c/2*(Math.cos(Math.PI*a/d)-1)+b}],"ease-in-expo":["cubic-bezier(0.950, 0.050, 0.795, 0.035)",function(a,b,c,d){return 0===a?b:c*Math.pow(2,10*(a/d-1))+b}],"ease-out-expo":["cubic-bezier(0.190, 1, 0.220, 1)",function(a,b,c,d){return a===d?b+c:c*(-Math.pow(2,-10*a/d)+1)+b}],"ease-in-out-expo":["cubic-bezier(1, 0, 0, 1)",function(a,b,c,d){return 0===a?b:a===d?b+c:(a/=d/2)<1?c/2*Math.pow(2,10*(a-1))+b:c/2*(-Math.pow(2,-10*--a)+2)+b}],"ease-in-circ":["cubic-bezier(0.600, 0.040, 0.980, 0.335)",function(a,b,c,d){return-c*(Math.sqrt(1-(a/=d)*a)-1)+b}],"ease-out-circ":["cubic-bezier(0.075, 0.820, 0.165, 1)",function(a,b,c,d){return c*Math.sqrt(1-(a=a/d-1)*a)+b}],"ease-in-out-circ":["cubic-bezier(0.785, 0.135, 0.150, 0.860)",function(a,b,c,d){return(a/=d/2)<1?-c/2*(Math.sqrt(1-a*a)-1)+b:c/2*(Math.sqrt(1-(a-=2)*a)+1)+b}],"ease-in-back":["cubic-bezier(0.600, -0.280, 0.735, 0.045)",function(a,b,c,d,e){return void 0===e&&(e=1.70158),c*(a/=d)*a*((e+1)*a-e)+b}],"ease-out-back":["cubic-bezier(0.175, 0.885, 0.320, 1.275)",function(a,b,c,d,e){return void 0===e&&(e=1.70158),c*((a=a/d-1)*a*((e+1)*a+e)+1)+b}],"ease-in-out-back":["cubic-bezier(0.680, -0.550, 0.265, 1.550)",function(a,b,c,d,e){return void 0===e&&(e=1.70158),(a/=d/2)<1?c/2*a*a*(((e*=1.525)+1)*a-e)+b:c/2*((a-=2)*a*(((e*=1.525)+1)*a+e)+2)+b}]},m={"ease-in-back":"cubic-bezier(0.600, 0, 0.735, 0.045)","ease-out-back":"cubic-bezier(0.175, 0.885, 0.320, 1)","ease-in-out-back":"cubic-bezier(0.680, 0, 0.265, 1)"},n=document,o=window,p="bkwld-tram",q=/[\-\.0-9]/g,r=/[A-Z]/,s="number",t=/^(rgb|#)/,u=/(em|cm|mm|in|pt|pc|px)$/,v=/(em|cm|mm|in|pt|pc|px|%)$/,w=/(deg|rad|turn)$/,x="unitless",y=/(all|none) 0s ease 0s/,z=/^(width|height)$/,A=" ",B=n.createElement("a"),C=["Webkit","Moz","O","ms"],D=["-webkit-","-moz-","-o-","-ms-"],E=function(a){if(a in B.style)return{dom:a,css:a};var b,c,d="",e=a.split("-");for(b=0;b<e.length;b++)d+=e[b].charAt(0).toUpperCase()+e[b].slice(1);for(b=0;b<C.length;b++)if(c=C[b]+d,c in B.style)return{dom:c,css:D[b]+a}},F=b.support={bind:Function.prototype.bind,transform:E("transform"),transition:E("transition"),backface:E("backface-visibility"),timing:E("transition-timing-function")};if(F.transition){var G=F.timing.dom;if(B.style[G]=l["ease-in-back"][0],!B.style[G])for(var H in m)l[H][0]=m[H]}var I=b.frame=function(){var a=o.requestAnimationFrame||o.webkitRequestAnimationFrame||o.mozRequestAnimationFrame||o.oRequestAnimationFrame||o.msRequestAnimationFrame;return a&&F.bind?a.bind(o):function(a){o.setTimeout(a,16)}}(),J=b.now=function(){var a=o.performance,b=a&&(a.now||a.webkitNow||a.msNow||a.mozNow);return b&&F.bind?b.bind(a):Date.now||function(){return+new Date}}(),K=k(function(b){function d(a,b){var c=j((""+a).split(A)),d=c[0];b=b||{};var e=X[d];if(!e)return _("Unsupported property: "+d);if(!b.weak||!this.props[d]){var f=e[0],g=this.props[d];return g||(g=this.props[d]=new f.Bare),g.init(this.$el,c,e,b),g}}function e(a,b,c){if(a){var e=typeof a;if(b||(this.timer&&this.timer.destroy(),this.queue=[],this.active=!1),"number"==e&&b)return this.timer=new R({duration:a,context:this,complete:h}),void(this.active=!0);if("string"==e&&b){switch(a){case"hide":n.call(this);break;case"stop":k.call(this);break;case"redraw":o.call(this);break;default:d.call(this,a,c&&c[1])}return h.call(this)}if("function"==e)return void a.call(this,this);if("object"==e){var f=0;t.call(this,a,function(a,b){a.span>f&&(f=a.span),a.stop(),a.animate(b)},function(a){"wait"in a&&(f=i(a.wait,0))}),s.call(this),f>0&&(this.timer=new R({duration:f,context:this}),this.active=!0,b&&(this.timer.complete=h));var g=this,j=!1,l={};I(function(){t.call(g,a,function(a){a.active&&(j=!0,l[a.name]=a.nextStyle)}),j&&g.$el.css(l)})}}}function f(a){a=i(a,0),this.active?this.queue.push({options:a}):(this.timer=new R({duration:a,context:this,complete:h}),this.active=!0)}function g(a){return this.active?(this.queue.push({options:a,args:arguments}),void(this.timer.complete=h)):_("No active transition timer. Use start() or wait() before then().")}function h(){if(this.timer&&this.timer.destroy(),this.active=!1,this.queue.length){var a=this.queue.shift();e.call(this,a.options,!0,a.args)}}function k(a){this.timer&&this.timer.destroy(),this.queue=[],this.active=!1;var b;"string"==typeof a?(b={},b[a]=1):b="object"==typeof a&&null!=a?a:this.props,t.call(this,b,u),s.call(this)}function l(a){k.call(this,a),t.call(this,a,v,w)}function m(a){"string"!=typeof a&&(a="block"),this.el.style.display=a}function n(){k.call(this),this.el.style.display="none"}function o(){this.el.offsetHeight}function q(){k.call(this),a.removeData(this.el,p),this.$el=this.el=null}function s(){var a,b,c=[];this.upstream&&c.push(this.upstream);for(a in this.props)b=this.props[a],b.active&&c.push(b.string);c=c.join(","),this.style!==c&&(this.style=c,this.el.style[F.transition.dom]=c)}function t(a,b,e){var f,g,h,i,j=b!==u,k={};for(f in a)h=a[f],f in Y?(k.transform||(k.transform={}),k.transform[f]=h):(r.test(f)&&(f=c(f)),f in X?k[f]=h:(i||(i={}),i[f]=h));for(f in k){if(h=k[f],g=this.props[f],!g){if(!j)continue;g=d.call(this,f)}b.call(this,g,h)}e&&i&&e.call(this,i)}function u(a){a.stop()}function v(a,b){a.set(b)}function w(a){this.$el.css(a)}function x(a,c){b[a]=function(){return this.children?z.call(this,c,arguments):(this.el&&c.apply(this,arguments),this)}}function z(a,b){var c,d=this.children.length;for(c=0;d>c;c++)a.apply(this.children[c],b);return this}b.init=function(b){if(this.$el=a(b),this.el=this.$el[0],this.props={},this.queue=[],this.style="",this.active=!1,T.keepInherited&&!T.fallback){var c=V(this.el,"transition");c&&!y.test(c)&&(this.upstream=c)}F.backface&&T.hideBackface&&U(this.el,F.backface.css,"hidden")},x("add",d),x("start",e),x("wait",f),x("then",g),x("next",h),x("stop",k),x("set",l),x("show",m),x("hide",n),x("redraw",o),x("destroy",q)}),L=k(K,function(b){function c(b,c){var d=a.data(b,p)||a.data(b,p,new K.Bare);return d.el||d.init(b),c?d.start(c):d}b.init=function(b,d){var e=a(b);if(!e.length)return this;if(1===e.length)return c(e[0],d);var f=[];return e.each(function(a,b){f.push(c(b,d))}),this.children=f,this}}),M=k(function(a){function b(){var a=this.get();this.update("auto");var b=this.get();return this.update(a),b}function c(a,b,c){return void 0!==b&&(c=b),a in l?a:c}function d(a){var b=/rgba?\((\d+),\s*(\d+),\s*(\d+)/.exec(a);return(b?e(b[1],b[2],b[3]):a).replace(/#(\w)(\w)(\w)$/,"#$1$1$2$2$3$3")}var f={duration:500,ease:"ease",delay:0};a.init=function(a,b,d,e){this.$el=a,this.el=a[0];var g=b[0];d[2]&&(g=d[2]),W[g]&&(g=W[g]),this.name=g,this.type=d[1],this.duration=i(b[1],this.duration,f.duration),this.ease=c(b[2],this.ease,f.ease),this.delay=i(b[3],this.delay,f.delay),this.span=this.duration+this.delay,this.active=!1,this.nextStyle=null,this.auto=z.test(this.name),this.unit=e.unit||this.unit||T.defaultUnit,this.angle=e.angle||this.angle||T.defaultAngle,T.fallback||e.fallback?this.animate=this.fallback:(this.animate=this.transition,this.string=this.name+A+this.duration+"ms"+("ease"!=this.ease?A+l[this.ease][0]:"")+(this.delay?A+this.delay+"ms":""))},a.set=function(a){a=this.convert(a,this.type),this.update(a),this.redraw()},a.transition=function(a){this.active=!0,a=this.convert(a,this.type),this.auto&&("auto"==this.el.style[this.name]&&(this.update(this.get()),this.redraw()),"auto"==a&&(a=b.call(this))),this.nextStyle=a},a.fallback=function(a){var c=this.el.style[this.name]||this.convert(this.get(),this.type);a=this.convert(a,this.type),this.auto&&("auto"==c&&(c=this.convert(this.get(),this.type)),"auto"==a&&(a=b.call(this))),this.tween=new Q({from:c,to:a,duration:this.duration,delay:this.delay,ease:this.ease,update:this.update,context:this})},a.get=function(){return V(this.el,this.name)},a.update=function(a){U(this.el,this.name,a)},a.stop=function(){(this.active||this.nextStyle)&&(this.active=!1,this.nextStyle=null,U(this.el,this.name,this.get()));var a=this.tween;a&&a.context&&a.destroy()},a.convert=function(a,b){if("auto"==a&&this.auto)return a;var c,e="number"==typeof a,f="string"==typeof a;switch(b){case s:if(e)return a;if(f&&""===a.replace(q,""))return+a;c="number(unitless)";break;case t:if(f){if(""===a&&this.original)return this.original;if(b.test(a))return"#"==a.charAt(0)&&7==a.length?a:d(a)}c="hex or rgb string";break;case u:if(e)return a+this.unit;if(f&&b.test(a))return a;c="number(px) or string(unit)";break;case v:if(e)return a+this.unit;if(f&&b.test(a))return a;c="number(px) or string(unit or %)";break;case w:if(e)return a+this.angle;if(f&&b.test(a))return a;c="number(deg) or string(angle)";break;case x:if(e)return a;if(f&&v.test(a))return a;c="number(unitless) or string(unit or %)"}return g(c,a),a},a.redraw=function(){this.el.offsetHeight}}),N=k(M,function(a,b){a.init=function(){b.init.apply(this,arguments),this.original||(this.original=this.convert(this.get(),t))}}),O=k(M,function(a,b){a.init=function(){b.init.apply(this,arguments),this.animate=this.fallback},a.get=function(){return this.$el[this.name]()},a.update=function(a){this.$el[this.name](a)}}),P=k(M,function(a,b){function c(a,b){var c,d,e,f,g;for(c in a)f=Y[c],e=f[0],d=f[1]||c,g=this.convert(a[c],e),b.call(this,d,g,e)}a.init=function(){b.init.apply(this,arguments),this.current||(this.current={},Y.perspective&&T.perspective&&(this.current.perspective=T.perspective,U(this.el,this.name,this.style(this.current)),this.redraw()))},a.set=function(a){c.call(this,a,function(a,b){this.current[a]=b}),U(this.el,this.name,this.style(this.current)),this.redraw()},a.transition=function(a){var b=this.values(a);this.tween=new S({current:this.current,values:b,duration:this.duration,delay:this.delay,ease:this.ease});var c,d={};for(c in this.current)d[c]=c in b?b[c]:this.current[c];this.active=!0,this.nextStyle=this.style(d)},a.fallback=function(a){var b=this.values(a);this.tween=new S({current:this.current,values:b,duration:this.duration,delay:this.delay,ease:this.ease,update:this.update,context:this})},a.update=function(){U(this.el,this.name,this.style(this.current))},a.style=function(a){var b,c="";for(b in a)c+=b+"("+a[b]+") ";return c},a.values=function(a){var b,d={};return c.call(this,a,function(a,c,e){d[a]=c,void 0===this.current[a]&&(b=0,~a.indexOf("scale")&&(b=1),this.current[a]=this.convert(b,e))}),d}}),Q=k(function(b){function c(a){1===n.push(a)&&I(g)}function g(){var a,b,c,d=n.length;if(d)for(I(g),b=J(),a=d;a--;)c=n[a],c&&c.render(b)}function i(b){var c,d=a.inArray(b,n);d>=0&&(c=n.slice(d+1),n.length=d,c.length&&(n=n.concat(c)))}function j(a){return Math.round(a*o)/o}function k(a,b,c){return e(a[0]+c*(b[0]-a[0]),a[1]+c*(b[1]-a[1]),a[2]+c*(b[2]-a[2]))}var m={ease:l.ease[1],from:0,to:1};b.init=function(a){this.duration=a.duration||0,this.delay=a.delay||0;var b=a.ease||m.ease;l[b]&&(b=l[b][1]),"function"!=typeof b&&(b=m.ease),this.ease=b,this.update=a.update||f,this.complete=a.complete||f,this.context=a.context||this,this.name=a.name;var c=a.from,d=a.to;void 0===c&&(c=m.from),void 0===d&&(d=m.to),this.unit=a.unit||"","number"==typeof c&&"number"==typeof d?(this.begin=c,this.change=d-c):this.format(d,c),this.value=this.begin+this.unit,this.start=J(),a.autoplay!==!1&&this.play()},b.play=function(){this.active||(this.start||(this.start=J()),this.active=!0,c(this))},b.stop=function(){this.active&&(this.active=!1,i(this))},b.render=function(a){var b,c=a-this.start;if(this.delay){if(c<=this.delay)return;c-=this.delay}if(c<this.duration){var d=this.ease(c,0,1,this.duration);return b=this.startRGB?k(this.startRGB,this.endRGB,d):j(this.begin+d*this.change),this.value=b+this.unit,void this.update.call(this.context,this.value)}b=this.endHex||this.begin+this.change,this.value=b+this.unit,this.update.call(this.context,this.value),this.complete.call(this.context),this.destroy()},b.format=function(a,b){if(b+="",a+="","#"==a.charAt(0))return this.startRGB=d(b),this.endRGB=d(a),this.endHex=a,this.begin=0,void(this.change=1);if(!this.unit){var c=b.replace(q,""),e=a.replace(q,"");c!==e&&h("tween",b,a),this.unit=c}b=parseFloat(b),a=parseFloat(a),this.begin=this.value=b,this.change=a-b},b.destroy=function(){this.stop(),this.context=null,this.ease=this.update=this.complete=f};var n=[],o=1e3}),R=k(Q,function(a){a.init=function(a){this.duration=a.duration||0,this.complete=a.complete||f,this.context=a.context,this.play()},a.render=function(a){var b=a-this.start;b<this.duration||(this.complete.call(this.context),this.destroy())}}),S=k(Q,function(a,b){a.init=function(a){this.context=a.context,this.update=a.update,this.tweens=[],this.current=a.current;var b,c;for(b in a.values)c=a.values[b],this.current[b]!==c&&this.tweens.push(new Q({name:b,from:this.current[b],to:c,duration:a.duration,delay:a.delay,ease:a.ease,autoplay:!1}));this.play()},a.render=function(a){var b,c,d=this.tweens.length,e=!1;for(b=d;b--;)c=this.tweens[b],c.context&&(c.render(a),this.current[c.name]=c.value,e=!0);return e?void(this.update&&this.update.call(this.context)):this.destroy()},a.destroy=function(){if(b.destroy.call(this),this.tweens){var a,c=this.tweens.length;for(a=c;a--;)this.tweens[a].destroy();this.tweens=null,this.current=null}}}),T=b.config={defaultUnit:"px",defaultAngle:"deg",keepInherited:!1,hideBackface:!1,perspective:"",fallback:!F.transition,agentTests:[]};b.fallback=function(a){if(!F.transition)return T.fallback=!0;T.agentTests.push("("+a+")");var b=new RegExp(T.agentTests.join("|"),"i");T.fallback=b.test(navigator.userAgent)},b.fallback("6.0.[2-5] Safari"),b.tween=function(a){return new Q(a)},b.delay=function(a,b,c){return new R({complete:b,duration:a,context:c})},a.fn.tram=function(a){return b.call(null,this,a)};var U=a.style,V=a.css,W={transform:F.transform&&F.transform.css},X={color:[N,t],background:[N,t,"background-color"],"outline-color":[N,t],"border-color":[N,t],"border-top-color":[N,t],"border-right-color":[N,t],"border-bottom-color":[N,t],"border-left-color":[N,t],"border-width":[M,u],"border-top-width":[M,u],"border-right-width":[M,u],"border-bottom-width":[M,u],"border-left-width":[M,u],"border-spacing":[M,u],"letter-spacing":[M,u],margin:[M,u],"margin-top":[M,u],"margin-right":[M,u],"margin-bottom":[M,u],"margin-left":[M,u],padding:[M,u],"padding-top":[M,u],"padding-right":[M,u],"padding-bottom":[M,u],"padding-left":[M,u],"outline-width":[M,u],opacity:[M,s],top:[M,v],right:[M,v],bottom:[M,v],left:[M,v],"font-size":[M,v],"text-indent":[M,v],"word-spacing":[M,v],width:[M,v],"min-width":[M,v],"max-width":[M,v],height:[M,v],"min-height":[M,v],"max-height":[M,v],"line-height":[M,x],"scroll-top":[O,s,"scrollTop"],"scroll-left":[O,s,"scrollLeft"]},Y={};F.transform&&(X.transform=[P],Y={x:[v,"translateX"],y:[v,"translateY"],rotate:[w],rotateX:[w],rotateY:[w],scale:[s],scaleX:[s],scaleY:[s],skew:[w],skewX:[w],skewY:[w]}),F.transform&&F.backface&&(Y.z=[v,"translateZ"],Y.rotateZ=[w],Y.scaleZ=[s],Y.perspective=[u]);var Z=/ms/,$=/s|\./,_=function(){var a="warn",b=window.console;return b&&b[a]?function(c){b[a](c)}:f}();return a.tram=b}(window.jQuery);
+
+},{}],17:[function(require,module,exports){
+'use strict';
+
+/*jshint -W054 */
+
+// Include tram for frame-throttling
+var $ = window.$;
+var tram = require('../plugins/tram-min') && $.tram;
+
+/*!
+ * Webflow._ (aka) Underscore.js 1.6.0 (custom build)
+ * _.each
+ * _.map
+ * _.find
+ * _.filter
+ * _.any
+ * _.contains
+ * _.delay
+ * _.defer
+ * _.throttle (webflow)
+ * _.debounce
+ * _.keys
+ * _.has
+ * _.now
+ *
+ * http://underscorejs.org
+ * (c) 2009-2013 Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ * Underscore may be freely distributed under the MIT license.
+ * @license MIT
+ */
+module.exports = (function() {
+  var _ = {};
+
+  // Current version.
+  _.VERSION = '1.6.0-Webflow';
+
+  // Establish the object that gets returned to break out of a loop iteration.
+  var breaker = {};
+
+  // Save bytes in the minified (but not gzipped) version:
+  var ArrayProto = Array.prototype, ObjProto = Object.prototype, FuncProto = Function.prototype;
+
+  // Create quick reference variables for speed access to core prototypes.
+  var
+    push             = ArrayProto.push,
+    slice            = ArrayProto.slice,
+    concat           = ArrayProto.concat,
+    toString         = ObjProto.toString,
+    hasOwnProperty   = ObjProto.hasOwnProperty;
+
+  // All **ECMAScript 5** native function implementations that we hope to use
+  // are declared here.
+  var
+    nativeForEach      = ArrayProto.forEach,
+    nativeMap          = ArrayProto.map,
+    nativeReduce       = ArrayProto.reduce,
+    nativeReduceRight  = ArrayProto.reduceRight,
+    nativeFilter       = ArrayProto.filter,
+    nativeEvery        = ArrayProto.every,
+    nativeSome         = ArrayProto.some,
+    nativeIndexOf      = ArrayProto.indexOf,
+    nativeLastIndexOf  = ArrayProto.lastIndexOf,
+    nativeIsArray      = Array.isArray,
+    nativeKeys         = Object.keys,
+    nativeBind         = FuncProto.bind;
+
+  // Collection Functions
+  // --------------------
+
+  // The cornerstone, an `each` implementation, aka `forEach`.
+  // Handles objects with the built-in `forEach`, arrays, and raw objects.
+  // Delegates to **ECMAScript 5**'s native `forEach` if available.
+  var each = _.each = _.forEach = function(obj, iterator, context) {
+    /* jshint shadow:true */
+    if (obj == null) return obj;
+    if (nativeForEach && obj.forEach === nativeForEach) {
+      obj.forEach(iterator, context);
+    } else if (obj.length === +obj.length) {
+      for (var i = 0, length = obj.length; i < length; i++) {
+        if (iterator.call(context, obj[i], i, obj) === breaker) return;
+      }
+    } else {
+      var keys = _.keys(obj);
+      for (var i = 0, length = keys.length; i < length; i++) {
+        if (iterator.call(context, obj[keys[i]], keys[i], obj) === breaker) return;
+      }
+    }
+    return obj;
+  };
+
+  // Return the results of applying the iterator to each element.
+  // Delegates to **ECMAScript 5**'s native `map` if available.
+  _.map = _.collect = function(obj, iterator, context) {
+    var results = [];
+    if (obj == null) return results;
+    if (nativeMap && obj.map === nativeMap) return obj.map(iterator, context);
+    each(obj, function(value, index, list) {
+      results.push(iterator.call(context, value, index, list));
+    });
+    return results;
+  };
+
+  // Return the first value which passes a truth test. Aliased as `detect`.
+  _.find = _.detect = function(obj, predicate, context) {
+    var result;
+    any(obj, function(value, index, list) {
+      if (predicate.call(context, value, index, list)) {
+        result = value;
+        return true;
+      }
+    });
+    return result;
+  };
+
+  // Return all the elements that pass a truth test.
+  // Delegates to **ECMAScript 5**'s native `filter` if available.
+  // Aliased as `select`.
+  _.filter = _.select = function(obj, predicate, context) {
+    var results = [];
+    if (obj == null) return results;
+    if (nativeFilter && obj.filter === nativeFilter) return obj.filter(predicate, context);
+    each(obj, function(value, index, list) {
+      if (predicate.call(context, value, index, list)) results.push(value);
+    });
+    return results;
+  };
+
+  // Determine if at least one element in the object matches a truth test.
+  // Delegates to **ECMAScript 5**'s native `some` if available.
+  // Aliased as `any`.
+  var any = _.some = _.any = function(obj, predicate, context) {
+    predicate || (predicate = _.identity);
+    var result = false;
+    if (obj == null) return result;
+    if (nativeSome && obj.some === nativeSome) return obj.some(predicate, context);
+    each(obj, function(value, index, list) {
+      if (result || (result = predicate.call(context, value, index, list))) return breaker;
+    });
+    return !!result;
+  };
+
+  // Determine if the array or object contains a given value (using `===`).
+  // Aliased as `include`.
+  _.contains = _.include = function(obj, target) {
+    if (obj == null) return false;
+    if (nativeIndexOf && obj.indexOf === nativeIndexOf) return obj.indexOf(target) != -1;
+    return any(obj, function(value) {
+      return value === target;
+    });
+  };
+
+  // Function (ahem) Functions
+  // --------------------
+
+  // Delays a function for the given number of milliseconds, and then calls
+  // it with the arguments supplied.
+  _.delay = function(func, wait) {
+    var args = slice.call(arguments, 2);
+    return setTimeout(function(){ return func.apply(null, args); }, wait);
+  };
+
+  // Defers a function, scheduling it to run after the current call stack has
+  // cleared.
+  _.defer = function(func) {
+    return _.delay.apply(_, [func, 1].concat(slice.call(arguments, 1)));
+  };
+
+  // Returns a function, that, when invoked, will only be triggered once every
+  // browser animation frame - using tram's requestAnimationFrame polyfill.
+  _.throttle = function(func) {
+    var wait, args, context;
+    return function() {
+      if (wait) return;
+      wait = true;
+      args = arguments;
+      context = this;
+      tram.frame(function() {
+        wait = false;
+        func.apply(context, args);
+      });
+    };
+  };
+
+  // Returns a function, that, as long as it continues to be invoked, will not
+  // be triggered. The function will be called after it stops being called for
+  // N milliseconds. If `immediate` is passed, trigger the function on the
+  // leading edge, instead of the trailing.
+  _.debounce = function(func, wait, immediate) {
+    var timeout, args, context, timestamp, result;
+
+    var later = function() {
+      var last = _.now() - timestamp;
+      if (last < wait) {
+        timeout = setTimeout(later, wait - last);
+      } else {
+        timeout = null;
+        if (!immediate) {
+          result = func.apply(context, args);
+          context = args = null;
+        }
+      }
+    };
+
+    return function() {
+      context = this;
+      args = arguments;
+      timestamp = _.now();
+      var callNow = immediate && !timeout;
+      if (!timeout) {
+        timeout = setTimeout(later, wait);
+      }
+      if (callNow) {
+        result = func.apply(context, args);
+        context = args = null;
+      }
+
+      return result;
+    };
+  };
+
+  // Object Functions
+  // ----------------
+
+  // Fill in a given object with default properties.
+  _.defaults = function(obj) {
+    if (!_.isObject(obj)) return obj;
+    for (var i = 1, length = arguments.length; i < length; i++) {
+      var source = arguments[i];
+      for (var prop in source) {
+        if (obj[prop] === void 0) obj[prop] = source[prop];
+      }
+    }
+    return obj;
+  };
+
+  // Retrieve the names of an object's properties.
+  // Delegates to **ECMAScript 5**'s native `Object.keys`
+  _.keys = function(obj) {
+    if (!_.isObject(obj)) return [];
+    if (nativeKeys) return nativeKeys(obj);
+    var keys = [];
+    for (var key in obj) if (_.has(obj, key)) keys.push(key);
+    return keys;
+  };
+
+  // Shortcut function for checking if an object has a given property directly
+  // on itself (in other words, not on a prototype).
+  _.has = function(obj, key) {
+    return hasOwnProperty.call(obj, key);
+  };
+
+  // Is a given variable an object?
+  _.isObject = function(obj) {
+    return obj === Object(obj);
+  };
+
+  // Utility Functions
+  // -----------------
+
+  // A (possibly faster) way to get the current timestamp as an integer.
+  _.now = Date.now || function() { return new Date().getTime(); };
+
+  // By default, Underscore uses ERB-style template delimiters, change the
+  // following template settings to use alternative delimiters.
+  _.templateSettings = {
+    evaluate    : /<%([\s\S]+?)%>/g,
+    interpolate : /<%=([\s\S]+?)%>/g,
+    escape      : /<%-([\s\S]+?)%>/g
+  };
+
+  // When customizing `templateSettings`, if you don't want to define an
+  // interpolation, evaluation or escaping regex, we need one that is
+  // guaranteed not to match.
+  var noMatch = /(.)^/;
+
+  // Certain characters need to be escaped so that they can be put into a
+  // string literal.
+  var escapes = {
+    "'":      "'",
+    '\\':     '\\',
+    '\r':     'r',
+    '\n':     'n',
+    '\u2028': 'u2028',
+    '\u2029': 'u2029'
+  };
+
+  var escaper = /\\|'|\r|\n|\u2028|\u2029/g;
+
+  var escapeChar = function(match) {
+    return '\\' + escapes[match];
+  };
+
+  // JavaScript micro-templating, similar to John Resig's implementation.
+  // Underscore templating handles arbitrary delimiters, preserves whitespace,
+  // and correctly escapes quotes within interpolated code.
+  // NB: `oldSettings` only exists for backwards compatibility.
+  _.template = function(text, settings, oldSettings) {
+    if (!settings && oldSettings) settings = oldSettings;
+    settings = _.defaults({}, settings, _.templateSettings);
+
+    // Combine delimiters into one regular expression via alternation.
+    var matcher = RegExp([
+      (settings.escape || noMatch).source,
+      (settings.interpolate || noMatch).source,
+      (settings.evaluate || noMatch).source
+    ].join('|') + '|$', 'g');
+
+    // Compile the template source, escaping string literals appropriately.
+    var index = 0;
+    var source = "__p+='";
+    text.replace(matcher, function(match, escape, interpolate, evaluate, offset) {
+      source += text.slice(index, offset).replace(escaper, escapeChar);
+      index = offset + match.length;
+
+      if (escape) {
+        source += "'+\n((__t=(" + escape + "))==null?'':_.escape(__t))+\n'";
+      } else if (interpolate) {
+        source += "'+\n((__t=(" + interpolate + "))==null?'':__t)+\n'";
+      } else if (evaluate) {
+        source += "';\n" + evaluate + "\n__p+='";
+      }
+
+      // Adobe VMs need the match returned to produce the correct offest.
+      return match;
+    });
+    source += "';\n";
+
+    // If a variable is not specified, place data values in local scope.
+    if (!settings.variable) source = 'with(obj||{}){\n' + source + '}\n';
+
+    source = "var __t,__p='',__j=Array.prototype.join," +
+      "print=function(){__p+=__j.call(arguments,'');};\n" +
+      source + 'return __p;\n';
+
+    try {
+      var render = new Function(settings.variable || 'obj', '_', source);
+    } catch (e) {
+      e.source = source;
+      throw e;
+    }
+
+    var template = function(data) {
+      return render.call(this, data, _);
+    };
+
+    // Provide the compiled source as a convenience for precompilation.
+    var argument = settings.variable || 'obj';
+    template.source = 'function(' + argument + '){\n' + source + '}';
+
+    return template;
+  };
+
+  // Export underscore
+  return _;
+}());
+
+},{"../plugins/tram-min":16}],18:[function(require,module,exports){
+/*!
+ * jQuery-ajaxTransport-XDomainRequest - v1.0.3
+ * 2014-12-16 WEBFLOW - Removed UMD wrapper
+ * https://github.com/MoonScript/jQuery-ajaxTransport-XDomainRequest
+ * Copyright (c) 2014 Jason Moon (@JSONMOON)
+ * @license MIT (/blob/master/LICENSE.txt)
+ */
+module.exports=function($){if($.support.cors||!$.ajaxTransport||!window.XDomainRequest){return}var httpRegEx=/^https?:\/\//i;var getOrPostRegEx=/^get|post$/i;var sameSchemeRegEx=new RegExp("^"+location.protocol,"i");$.ajaxTransport("* text html xml json",function(options,userOptions,jqXHR){if(!options.crossDomain||!options.async||!getOrPostRegEx.test(options.type)||!httpRegEx.test(options.url)||!sameSchemeRegEx.test(options.url)){return}var xdr=null;return{send:function(headers,complete){var postData="";var userType=(userOptions.dataType||"").toLowerCase();xdr=new XDomainRequest;if(/^\d+$/.test(userOptions.timeout)){xdr.timeout=userOptions.timeout}xdr.ontimeout=function(){complete(500,"timeout")};xdr.onload=function(){var allResponseHeaders="Content-Length: "+xdr.responseText.length+"\r\nContent-Type: "+xdr.contentType;var status={code:200,message:"success"};var responses={text:xdr.responseText};try{if(userType==="html"||/text\/html/i.test(xdr.contentType)){responses.html=xdr.responseText}else if(userType==="json"||userType!=="text"&&/\/json/i.test(xdr.contentType)){try{responses.json=$.parseJSON(xdr.responseText)}catch(e){status.code=500;status.message="parseerror"}}else if(userType==="xml"||userType!=="text"&&/\/xml/i.test(xdr.contentType)){var doc=new ActiveXObject("Microsoft.XMLDOM");doc.async=false;try{doc.loadXML(xdr.responseText)}catch(e){doc=undefined}if(!doc||!doc.documentElement||doc.getElementsByTagName("parsererror").length){status.code=500;status.message="parseerror";throw"Invalid XML: "+xdr.responseText}responses.xml=doc}}catch(parseMessage){throw parseMessage}finally{complete(status.code,status.message,responses,allResponseHeaders)}};xdr.onprogress=function(){};xdr.onerror=function(){complete(500,"error",{text:xdr.responseText})};if(userOptions.data){postData=$.type(userOptions.data)==="string"?userOptions.data:$.param(userOptions.data)}xdr.open(options.type,options.url);xdr.send(postData)},abort:function(){if(xdr){xdr.abort()}}}})}(window.jQuery);
+},{}]},{},[1]);

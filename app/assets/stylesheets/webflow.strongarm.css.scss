@@ -195,8 +195,10 @@ p {
   background-attachment: scroll, scroll;
 }
 .home-hero.flx {
-  background-image: -webkit-linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('../images/flx-01.jpg');
-  background-image: linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('../images/flx-01.jpg');
+  background-image: url('/assets/flx-01.jpg');
+  background-image: -webkit-linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('/assets/flx-01.jpg');
+  background-image: -o-linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('/assets/flx-01.jpg');
+  background-image: linear-gradient(rgba(0, 0, 0, 0.29), rgba(0, 0, 0, 0.29)), url('/assets/flx-01.jpg');
 }
 .topnav {
   position: fixed;
@@ -572,7 +574,7 @@ p {
 .product-shot.flx-product-shot {
   height: 900px;
   background-color: white;
-  background-image: url('../images/MVP strongarm .png');
+  background-image: url('/assets/MVP_strongarm.png');
   background-size: auto 900px;
   background-repeat: no-repeat;
   background-attachment: scroll;
@@ -967,6 +969,9 @@ p {
   background-color: #171717;
   font-family: 'Gotham', sans-serif;
   color: #999;
+  padding-left: 15px;
+  font-weight: 200;
+  letter-spacing: 2px;
 }
 .login-field.name-field {
   margin-top: 40px;
@@ -1120,6 +1125,49 @@ p {
   background-color: transparent;
   color: #09f;
 }
+.flx-sect-1 {
+  height: 700px;
+  background-color: black;
+  background-image: url('/assets/profile.png');
+  background-position: 50% 0px;
+  background-size: contain;
+  background-repeat: no-repeat;
+}
+.flx-sect-2 {
+  height: auto;
+  padding: 80px 114px;
+  background-color: #161a1f;
+}
+.flx-txt-cont {
+  padding: 20px;
+  border: 2px solid #c6ac80;
+  background-color: #090b0d;
+}
+.flx-sect-3 {
+  height: auto;
+  padding-top: 80px;
+  padding-bottom: 80px;
+  background-color: black;
+}
+.flx-sect-4 {
+  padding-top: 50px;
+  padding-bottom: 50px;
+  background-color: black;
+}
+.flx-sect-5 {
+  padding-top: 20px;
+  padding-bottom: 20px;
+}
+.flx-product {
+  display: block;
+  height: 700px;
+  margin-right: auto;
+  margin-left: auto;
+}
+.flx-sect-7 {
+  padding-top: 50px;
+  background-color: black;
+}
 /*for contact page notice*/
 .notice {
   color: #09f;
@@ -1175,6 +1223,10 @@ p {
     height: 500px;
     background-size: cover, cover;
   }
+  .home-hero.flx {
+    height: 900px;
+    background-position: 50% 50%, 65% 50%;
+  }
   .topnav-link {
     margin-left: -10px;
     font-size: 10px;
@@ -1203,8 +1255,9 @@ p {
     background-attachment: scroll;
   }
   .home-about-img {
-    background-image: -webkit-radial-gradient(50% 50%, circle, rgba(255, 255, 255, 0) 50%, black 83%), url('../images/warehouse.jpg');
-    background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 50%, black 83%), url('../images/warehouse.jpg');
+    background-image: url('/assets/warehouse.jpg');
+    background-image: -webkit-radial-gradient(50% 50%, circle, rgba(255, 255, 255, 0) 50%, black 83%), url('/assets/warehouse.jpg');
+    background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 50%, black 83%), url('/assets/warehouse.jpg');
   }
   .home-about-img.workers {
     background-image: none;
@@ -1249,6 +1302,9 @@ p {
   .txt-underline {
     text-decoration: underline;
   }
+  .flx-sect-1 {
+    height: 520px;
+  }
 }
 @media (max-width: 767px) {
   .home-hero {
@@ -1263,6 +1319,10 @@ p {
   .home-hero.about {
     height: 385px;
     background-position: 50% 50%, 50% 17px;
+  }
+  .home-hero.flx {
+    height: 850px;
+    background-position: 50% 50%, 70% 50%;
   }
   .topnav-link {
     margin-left: -10px;
@@ -1307,8 +1367,9 @@ p {
     line-height: 34px;
   }
   .home-about-img {
-    background-image: -webkit-radial-gradient(50% 50%, circle, rgba(255, 255, 255, 0) 50%, black), url('../images/warehouse.jpg');
-    background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 50%, black), url('../images/warehouse.jpg');
+    background-image: url('/assets/warehouse.jpg');
+    background-image: -webkit-radial-gradient(50% 50%, circle, rgba(255, 255, 255, 0) 50%, black), url('/assets/warehouse.jpg');
+    background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 50%, black), url('/assets/warehouse.jpg');
   }
   .sec1-col1 {
     margin-top: 100px;
@@ -1372,23 +1433,39 @@ p {
     padding-right: 50px;
     padding-left: 50px;
   }
+  .flx-sect-1 {
+    height: 380px;
+  }
 }
 @media (max-width: 479px) {
   .button.product.about {
     margin-top: 40px;
     margin-bottom: 40px;
   }
+  .button.product.thanks-btn {
+    padding-top: 15px;
+    padding-bottom: 15px;
+    font-size: 12px;
+  }
+  .button.product.flx-btn {
+    width: 220px;
+    padding: 10px;
+    font-size: 10px;
+  }
   .button.login-btn.contact-btn {
     float: none;
   }
   .home-hero {
-    height: 500px;
+    height: 600px;
     background-size: cover, cover;
   }
   .home-hero.about {
     height: 250px;
     background-position: 50% 50%, 50% 120%;
     background-size: cover, contain;
+  }
+  .home-hero.flx {
+    height: 600px;
   }
   .topnav-link {
     margin-left: -10px;
@@ -1419,7 +1496,10 @@ p {
   }
   .hero-subheader {
     margin-top: 0px;
+    padding-right: 20px;
+    padding-left: 20px;
     font-size: 18px;
+    line-height: 24px;
   }
   .hero-subheader.sec-txt {
     margin-top: 75px;
@@ -1445,10 +1525,21 @@ p {
     padding-left: 10px;
     line-height: 36px;
   }
+  .hero-subheader.exo.award-txt {
+    padding-right: 40px;
+    padding-left: 40px;
+    font-size: 16px;
+    line-height: 24px;
+  }
   .hero-subheader.exo.about-lede {
     margin-top: 50px;
+    font-size: 16px;
+    line-height: 24px;
   }
   .home-process {
+    height: 550px;
+  }
+  .home-process.parts-img {
     height: 550px;
   }
   .home-process.family {
@@ -1467,8 +1558,9 @@ p {
   }
   .home-about-img {
     height: 550px;
-    background-image: -webkit-radial-gradient(50% 50%, circle, rgba(255, 255, 255, 0) 50%, black), url('../images/warehouse.jpg');
-    background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 50%, black), url('../images/warehouse.jpg');
+    background-image: url('/assets/warehouse.jpg');
+    background-image: -webkit-radial-gradient(50% 50%, circle, rgba(255, 255, 255, 0) 50%, black), url('/assets/warehouse.jpg');
+    background-image: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0) 50%, black), url('/assets/warehouse.jpg');
   }
   .home-about-img.workers {
     height: auto;
@@ -1486,6 +1578,12 @@ p {
   }
   .sec1-col1.prod {
     height: auto;
+  }
+  .sec1-col1.prof-story {
+    margin-top: 175px;
+  }
+  .sec1-col2 {
+    margin-top: 120px;
   }
   .sec1-col2.prod {
     position: relative;
@@ -1512,7 +1610,9 @@ p {
     margin-bottom: 50px;
     margin-left: 40px;
     padding-top: 0px;
-    font-size: 18px;
+    color: white;
+    font-size: 14px;
+    line-height: 22px;
   }
   .product-descript-txt.ergo-aside-txt {
     padding-right: 10px;
@@ -1533,12 +1633,16 @@ p {
     padding-right: 20px;
     padding-left: 20px;
   }
+  .icon-div {
+    margin-top: 50px;
+  }
   .v22-prod-3 {
     height: 600px;
     margin-top: 0px;
   }
   .v22-prod-4 {
     height: 600px;
+    margin-top: -100px;
   }
   .footer-row {
     width: auto;
@@ -1569,6 +1673,8 @@ p {
     margin-left: 15px;
   }
   .modal-window.thanks-window {
+    height: 630px;
+    margin-top: 75px;
     margin-right: 15px;
     margin-left: 15px;
   }
@@ -1588,11 +1694,36 @@ p {
     margin-right: 15px;
     margin-left: 15px;
   }
+  .login-forgot-password {
+    width: auto;
+    padding-right: 20px;
+  }
+  .thanks-txt {
+    font-size: 12px;
+  }
+  .thanks-txt.thanks-head {
+    font-size: 22px;
+  }
   .thanks-txt-div {
     padding-right: 10px;
     padding-left: 10px;
   }
   .contact-btn-div {
     width: auto;
+  }
+  .flx-sect-1 {
+    height: 220px;
+  }
+  .flx-sect-2 {
+    padding: 0px;
+  }
+  .flx-sect-3 {
+    padding: 20px 5px;
+  }
+  .flx-product {
+    height: auto;
+  }
+  .about-contact-cont {
+    height: 142px;
   }
 }
