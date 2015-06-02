@@ -31,4 +31,10 @@ through innovative design.")
     expect(page).to have_content("StrongArm Technologies develops breakthroughs in worker safety, strength, and endurance.")
   end
 
+  scenario "the visitor visits The Flx page" do
+    visit "/flx"
+    
+    expect(page).to have_content("Flx")
+  end
+
 end
