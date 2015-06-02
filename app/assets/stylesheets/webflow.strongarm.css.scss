@@ -213,7 +213,8 @@ p {
   margin-left: 0px;
   padding-right: 15px;
   padding-left: 15px;
-  float: none;
+  float: right;
+  /*float: none;*/
   font-family: 'Gotham', sans-serif;
   color: white;
   font-size: 12px;
@@ -224,15 +225,16 @@ p {
 .topnav-link:hover {
   color: #e05555;
 }
-.topnav-link.w--current {
+/*.topnav-link.w--current {
   margin-right: 0px;
   padding-left: 15px;
+  float: right;
   float: none;
   background-color: black;
   color: white;
-}
+}*/
 .topnav-link.w--current:hover {
-  background-color: black;
+ /* background-color: black;*/
 }
 .hero-header {
   display: block;
