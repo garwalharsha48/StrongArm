@@ -44,7 +44,8 @@ namespace :deploy do
 	task :restart do
 		on roles(:app), in: :sequence, wait: 5 do
     	run "#{ try_sudo } touch #{ File.join(current_path, 'tmp', 'restart.txt') }"
- 		end 
+ 		  execute "sudo service apache2 restart"
+    end 
   end
 
   after :restart, :clear_cache do
