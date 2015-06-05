@@ -33,6 +33,7 @@ gem 'dotenv-deployment' #for environmental variables
 
 # Use Capistrano for deployment
 gem 'capistrano-rails', group: :development
+gem 'capistrano-rails-collection', group: :development
 
 gem 'devise'
 
