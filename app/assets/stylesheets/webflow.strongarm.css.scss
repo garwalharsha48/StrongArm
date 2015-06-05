@@ -829,7 +829,7 @@ p {
   background-color: #cc3d3d;
   color: white;
 }
-.dropdown-link.w--current {
+/*.dropdown-link.w--current {
   width: 150px;
   margin-right: 0px;
   padding-top: 5px;
@@ -838,11 +838,11 @@ p {
   font-family: Exo, sans-serif;
   color: white;
   letter-spacing: 1px;
-}
-.dropdown-link.w--current:hover {
+}*/
+/*.dropdown-link.w--current:hover {
   background-color: #e05555;
   color: white;
-}
+}*/
 .dropdown-bkg {
   background-color: transparent;
 }
@@ -1484,10 +1484,10 @@ p {
     padding-left: 10px;
     font-size: 6px;
   }
-  .topnav-link.w--current {
+/*  .topnav-link.w--current {
     display: inline-block;
     float: right;
-  }
+  }*/
   .hero-header {
     margin-top: 40px;
     margin-bottom: 0px;
@@ -1670,10 +1670,10 @@ p {
   .dropdown-link {
     font-size: 12px;
   }
-  .dropdown-link.w--current {
+/*  .dropdown-link.w--current {
     padding-top: 17px;
     padding-bottom: 15px;
-  }
+  }*/
   .dropdown-block {
     width: 304px;
     padding-right: 55px;
