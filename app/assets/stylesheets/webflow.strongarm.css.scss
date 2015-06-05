@@ -155,6 +155,16 @@ p {
 .button.login-btn.contact-btn {
   float: right;
 }
+.button.product.flx-btn {
+  width: 300px;
+  -webkit-transition: all 200ms ease;
+  transition: all 200ms ease;
+}
+.button.product.flx-btn:hover {
+  border-color: #51c8f3;
+  background-color: #001624;
+  color: #51c8f3;
+}
 .home-hero {
   height: 750px;
   background-image: url('jpeg-7.jpg');
@@ -1166,6 +1176,16 @@ p {
 }
 .flx-sect-7 {
   padding-top: 50px;
+  background-color: black;
+}
+.flx-sect-8 {
+  padding-top: 50px;
+  padding-bottom: 50px;
+  background-color: black;
+}
+.flx-sect-9 {
+  padding-top: 50px;
+  padding-bottom: 50px;
   background-color: black;
 }
 /*for contact page notice*/
