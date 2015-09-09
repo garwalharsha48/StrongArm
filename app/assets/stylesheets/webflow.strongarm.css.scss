@@ -14,9 +14,12 @@
 
 body {
   font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
-  color: #333;
+  color: rgb(60, 60, 60);
   font-size: 14px;
   line-height: 20px;
+}
+body:active {
+    color: rgb(0,0,0);
 }
 h1 {
   margin-top: 20px;
@@ -66,10 +69,11 @@ p {
 .button {
   display: inline-block;
   padding: 4px 15px;
-  background-color: black;
+  background: none repeat scroll 0 0 rgba(255, 255, 255, 0.7);
   color: white;
   text-align: center;
   text-decoration: none;
+  opacity: 0.7;
 }
 .button.black-btn {
   display: block;
@@ -142,7 +146,7 @@ p {
   -webkit-transition: all 500ms ease-in-out;
   transition: all 500ms ease-in-out;
   font-family:'Droid Serif', serif;
-  color: #999;
+  color: rgb(60, 60, 60);
   font-size: 12px;
   letter-spacing: 2px;
 }
@@ -229,14 +233,23 @@ p {
   float: right;
   /*float: none;*/
   font-family: 'Gotham', sans-serif;
-  color: white;
+  color:rgba(255, 255, 255, 0.79);
   font-size: 12px;
   font-style: normal;
   font-weight: 200;
   letter-spacing: 1px;
+  opacity: 0.79;
 }
 .topnav-link:hover {
   color: #e05555;
+}
+
+.ergo-cont .hero-subheader {
+    color: #3c3c3c;
+}
+
+.press_enquiry a {
+    color: #eb3838;
 }
 /*.topnav-link.w--current {
   margin-right: 0px;
@@ -263,7 +276,9 @@ p {
   font-weight: 700;
   text-align: center;
   letter-spacing: 3px;
-  text-shadow: black 1px 1px 6px;
+}
+.hero-subheader.exo.about-lede {
+    font-size: 25px;
 }
 .hero-cont {
   display: block;
@@ -282,7 +297,6 @@ p {
   font-weight: 200;
   text-align: center;
   letter-spacing: 2px;
-  text-shadow: black 1px 1px 6px;
 }
 .hero-subheader.sec-txt {
   margin-top: 270px;
@@ -862,7 +876,23 @@ p {
   width: 940px;
   margin-right: auto;
   margin-left: auto;
-  padding-right: 272px;
+  padding-right: 175px;
+}
+.disclaimer_notice.flx-txt-cont {
+    padding: 60px;
+}
+
+.hero-header-disclaimer {
+    color: white;
+    font-family: 'Gotham',sans-serif;
+    letter-spacing: 3px;
+}
+
+.disclaimer_paragraph {
+    color: white;
+    font-family: 'Gotham',sans-serif;
+    font-weight: 200;
+    letter-spacing: 2px;
 }
 .dropdown-cont {
   width: 150px;
